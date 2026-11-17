@@ -129,6 +129,53 @@ public sealed class ResultRowViewModel : ObservableObject
     }
 }
 
+/// <summary>Row of the list of installed apps that can be uninstalled.</summary>
+public sealed class UninstallRowViewModel : ObservableObject
+{
+    private bool _isSelected;
+    private string _status = "";
+
+    public UninstallRowViewModel(WingetSearchResult app)
+    {
+        App = app;
+    }
+
+    public WingetSearchResult App { get; }
+
+    public string Id => App.Id;
+
+    public string Name => App.Name;
+
+    public string Detail => App.Detail;
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (value != _isSelected)
+            {
+                _isSelected = value;
+                Raise();
+            }
+        }
+    }
+
+    /// <summary>Progress or error of the uninstallation; empty otherwise.</summary>
+    public string Status
+    {
+        get => _status;
+        set
+        {
+            if (value != _status)
+            {
+                _status = value;
+                Raise();
+            }
+        }
+    }
+}
+
 /// <summary>A category of the app list, with its apps.</summary>
 public sealed class AppCategoryViewModel : ObservableObject
 {

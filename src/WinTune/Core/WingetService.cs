@@ -55,6 +55,18 @@ public static class WingetService
 
     public static bool IsValidId(string id) => IdPattern.IsMatch(id);
 
+    /// <summary>
+    /// Wider than <see cref="IsValidId"/>: also accepts the IDs winget gives to programs it does not know
+    /// (for example "ARP\Machine\X64\{...}"), as long as they cannot break the command line.
+    /// </summary>
+    public static bool IsUninstallableId(string id) =>
+        id.Length is >= 2 and <= 250
+        && !id.Contains('"')
+        && !id.Contains('\u2026')
+        && !id.EndsWith('\\')
+        && !id.Any(char.IsControl)
+        && id.Trim() == id;
+
     private static string Exe
     {
         get
@@ -311,7 +323,7 @@ public static class WingetService
     /// <summary>Uninstalls an app silently.</summary>
     public static async Task<(bool Ok, string Message)> UninstallAsync(string id)
     {
-        if (!IsValidId(id))
+        if (!IsUninstallableId(id))
         {
             return (false, "Invalid ID.");
         }
@@ -322,12 +334,87 @@ public static class WingetService
                 "uninstall --id \"" + id + "\" --exact --silent --accept-source-agreements --disable-interactivity",
                 30 * 60 * 1000);
 
+            if (result.ExitCode != 0)
+            {
+                // Apps installed "for the current user" refuse to be removed from an elevated process, and the
+                // message depends on the Windows language: so any failure is retried as the normal user.
+                return await UninstallAsUserAsync(id);
+            }
+
             bool ok = result.ExitCode == 0;
             return (ok, ok ? "Uninstalled" : DescribeFailure("uninstall " + id, result));
         }
         catch (Exception ex)
         {
             return (false, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Runs "winget uninstall" without administrator rights, as the user who is logged in,
+    /// through a temporary scheduled task (the only reliable way to drop elevation).
+    /// </summary>
+    private static async Task<(bool Ok, string Message)> UninstallAsUserAsync(string id)
+    {
+        string work = Path.Combine(Path.GetTempPath(), "WinTune-uninstall-" + Guid.NewGuid().ToString("N"));
+        string taskName = "WinTune-uninstall-" + Guid.NewGuid().ToString("N");
+        Directory.CreateDirectory(work);
+        string outFile = Path.Combine(work, "out.txt");
+        string codeFile = Path.Combine(work, "code.txt");
+        string safeId = id.Replace("'", "''");
+
+        string inner =
+            "$ErrorActionPreference='Continue'; "
+            + "& winget uninstall --id '" + safeId + "' --exact --silent --accept-source-agreements --disable-interactivity *> '" + outFile + "'; "
+            + "$LASTEXITCODE | Out-File -Encoding ascii '" + codeFile + "'";
+        string encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(inner));
+
+        string script =
+            "$u = (Get-CimInstance Win32_ComputerSystem).UserName; "
+            + "if (-not $u) { Write-Output 'NOUSER'; exit 1 }; "
+            + "$a = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument '--headless powershell.exe -NoProfile -EncodedCommand " + encoded + "'; "
+            + "$p = New-ScheduledTaskPrincipal -UserId $u -LogonType Interactive -RunLevel Limited; "
+            + "$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; "
+            + "Register-ScheduledTask -TaskName '" + taskName + "' -Action $a -Principal $p -Settings $s -Force | Out-Null; "
+            + "Start-ScheduledTask -TaskName '" + taskName + "'; "
+            + "Start-Sleep -Seconds 3; "
+            + "while ((Get-ScheduledTask -TaskName '" + taskName + "').State -eq 'Running') { Start-Sleep -Seconds 2 }; "
+            + "Unregister-ScheduledTask -TaskName '" + taskName + "' -Confirm:$false";
+
+        try
+        {
+            ProcessResult run = await ProcessRunner.RunPowerShellAsync(script, 30 * 60 * 1000);
+            if (run.Output.Contains("NOUSER", StringComparison.Ordinal))
+            {
+                return (false, "No user is logged in to run the uninstaller.");
+            }
+
+            string output = File.Exists(outFile) ? File.ReadAllText(outFile).Trim() : "";
+            string codeText = File.Exists(codeFile) ? File.ReadAllText(codeFile).Trim() : "";
+            bool ok = codeText == "0";
+
+            if (ok)
+            {
+                return (true, "Uninstalled");
+            }
+
+            string last = output.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0) ?? run.Error;
+            return (false, "Uninstall failed (as the current user): " + last);
+        }
+        catch (Exception ex)
+        {
+            return (false, ex.Message);
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(work, true);
+            }
+            catch
+            {
+                // Temporary files: nothing to do if they cannot be removed.
+            }
         }
     }
 
@@ -365,6 +452,27 @@ public static class WingetService
             .Select(g => g.First())
             .OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
+    }
+
+    /// <summary>
+    /// Every program that winget lists as installed (also the ones it does not recognize), sorted by name.
+    /// Used by the uninstall list.
+    /// </summary>
+    public static async Task<List<WingetSearchResult>> GetAllInstalledAsync()
+    {
+        try
+        {
+            ProcessResult result = await RunAsync("list --accept-source-agreements --disable-interactivity", 240000);
+            return ParseSearchTable(result.Output, anyId: true)
+                .GroupBy(a => a.Id, StringComparer.OrdinalIgnoreCase)
+                .Select(g => g.First())
+                .OrderBy(a => a.Name, StringComparer.CurrentCultureIgnoreCase)
+                .ToList();
+        }
+        catch
+        {
+            return new List<WingetSearchResult>();
+        }
     }
 
     /// <summary>"Mozilla.Firefox" becomes "Firefox", "Microsoft.VisualStudioCode" stays readable.</summary>
@@ -453,7 +561,7 @@ public static class WingetService
     }
 
     /// <summary>Reads the "winget search" table. The columns are derived from the header line, whatever the language.</summary>
-    private static List<WingetSearchResult> ParseSearchTable(string output)
+    private static List<WingetSearchResult> ParseSearchTable(string output, bool anyId = false)
     {
         var results = new List<WingetSearchResult>();
         List<string> lines = CleanLines(output);
@@ -491,7 +599,7 @@ public static class WingetService
             string id = Slice(line, starts[1], starts.Count > 2 ? starts[2] : line.Length);
             string version = starts.Count > 2 ? Slice(line, starts[2], starts.Count > 3 ? starts[3] : line.Length) : "";
 
-            if (name.Length > 0 && IsValidId(id))
+            if (name.Length > 0 && (anyId ? IsUninstallableId(id) : IsValidId(id)))
             {
                 results.Add(new WingetSearchResult(name, id, version));
             }

@@ -16,6 +16,7 @@ namespace WinTune.Views.Pages;
 public partial class ToolPage : Page
 {
     private bool _busy;
+    private DateTime _lastRead = DateTime.MinValue;
 
     public ToolPage()
     {
@@ -48,7 +49,16 @@ public partial class ToolPage : Page
             : "Future installations will use the folder chosen by the program installer.";
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e) => await RefreshAsync();
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // Reading the state takes a few seconds: when coming back to the page, reuse what was read recently.
+        if (DateTime.Now - _lastRead < TimeSpan.FromMinutes(5))
+        {
+            return;
+        }
+
+        await RefreshAsync();
+    }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs e) => await RefreshAsync();
 
@@ -85,6 +95,7 @@ public partial class ToolPage : Page
         items.AddRange(list.Select(s => new ToolViewModel(s)));
         items.AddRange(ExternalToolService.Scripts.Select(s => new ScriptToolViewModel(s)));
         ToolsList.ItemsSource = items;
+        _lastRead = DateTime.Now;
     }
 
     /// <summary>Runs an operation showing the wait, then reads the state of the tools again.</summary>

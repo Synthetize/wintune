@@ -41,11 +41,12 @@ public partial class UtilitiesPage : Page
         _countdownTimer.Start();
         UpdateCountdown();
         UpdateProfileStatus();
-        await UpdateRestoreStatusAsync();
 
         if (!_measuredOnce)
         {
+            // Read only the first time: the restore point status is updated again after creating one.
             _measuredOnce = true;
+            await UpdateRestoreStatusAsync();
             await MeasureCleanupAsync();
         }
     }

@@ -19,6 +19,10 @@ public partial class AppPage : Page
     private readonly ObservableCollection<ResultRowViewModel> _results = new();
     private readonly ObservableCollection<BloatRowViewModel> _bloat = new();
     private readonly ObservableCollection<UpgradeRowViewModel> _upgrades = new();
+
+    // Uninstall list: all the installed apps, and the ones that match the filter (the ticks live in the first list).
+    private readonly List<UninstallRowViewModel> _allUninstall = new();
+    private readonly ObservableCollection<UninstallRowViewModel> _uninstallShown = new();
     private readonly ObservableCollection<IgnoredUpdateRowViewModel> _ignored = new();
 
     // Last "winget upgrade" result and the apps whose updates are ignored (ID and name).
@@ -51,6 +55,7 @@ public partial class AppPage : Page
             await SearchAsync(fromTyping: true);
         };
         BloatList.ItemsSource = _bloat;
+        UninstallList.ItemsSource = _uninstallShown;
         UpgradeList.ItemsSource = _upgrades;
         IgnoredList.ItemsSource = _ignored;
         StartupList.ItemsSource = _startup;
@@ -94,6 +99,7 @@ public partial class AppPage : Page
         await RefreshInstalledAsync();
         await LoadBloatAsync();
         await LoadUpgradesAsync();
+        await LoadUninstallIfVisibleAsync();
     }
 
     // ---------- Update notifications ----------
@@ -800,36 +806,6 @@ public partial class AppPage : Page
         await RunOnAppsAsync(targets, install: true);
     }
 
-    private async void OnUninstallClick(object sender, RoutedEventArgs e)
-    {
-        if (!RequireWinget("Uninstalling requires winget."))
-        {
-            return;
-        }
-
-        List<AppRowViewModel> targets = AllApps.Where(a => a.IsSelected && a.IsInstalled).ToList();
-        if (targets.Count == 0)
-        {
-            ShowMessage(
-                "Nothing to uninstall",
-                "No app selected, or the selected ones are not installed.",
-                Wpf.Ui.Controls.InfoBarSeverity.Informational);
-            return;
-        }
-
-        bool confirmed = await Dialogs.ConfirmAsync(
-            "Uninstall " + targets.Count + " apps from the PC?",
-            ListNames(targets) + "\n\nThe apps stay in the list, so you can reinstall them later.",
-            "Uninstall");
-
-        if (!confirmed)
-        {
-            return;
-        }
-
-        await RunOnAppsAsync(targets, install: false);
-    }
-
     private static string ListNames(List<AppRowViewModel> rows)
     {
         string list = string.Join("\n", rows.Take(15).Select(r => "•  " + r.Name));
@@ -914,10 +890,244 @@ public partial class AppPage : Page
     {
         InstallRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         InstallButton.IsEnabled = !busy;
-        UninstallButton.IsEnabled = !busy;
         RemoveFromListButton.IsEnabled = !busy;
         RefreshAppsButton.IsEnabled = !busy;
         InstallStatusText.Text = status;
+    }
+
+    // ---------- Uninstall apps ----------
+
+    private bool _uninstallLoaded;
+
+    // The list of installed apps is slow to read: it is loaded the first time the section is opened.
+    private async Task LoadUninstallIfVisibleAsync()
+    {
+        if (!_uninstallLoaded && UninstallPanel.Visibility == Visibility.Visible && _wingetReady)
+        {
+            _uninstallLoaded = true;
+            await LoadUninstallListAsync();
+        }
+    }
+
+    private async void OnSectionClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not ToggleButton clicked)
+        {
+            return;
+        }
+
+        // Only one section at a time.
+        foreach (ToggleButton button in SectionPanel.Children.OfType<ToggleButton>())
+        {
+            button.IsChecked = ReferenceEquals(button, clicked);
+        }
+
+        string section = (string)clicked.Tag;
+        UpdatesPanel.Visibility = section == "Updates" ? Visibility.Visible : Visibility.Collapsed;
+        InstallPanel.Visibility = section == "Install" ? Visibility.Visible : Visibility.Collapsed;
+        UninstallPanel.Visibility = section == "Uninstall" ? Visibility.Visible : Visibility.Collapsed;
+        PreinstalledPanel.Visibility = section == "Preinstalled" ? Visibility.Visible : Visibility.Collapsed;
+        StartupPanel.Visibility = section == "Startup" ? Visibility.Visible : Visibility.Collapsed;
+
+        await LoadUninstallIfVisibleAsync();
+    }
+
+    private async void OnUninstallRefreshClick(object sender, RoutedEventArgs e) => await LoadUninstallListAsync();
+
+    private void OnUninstallFilterChanged(object sender, TextChangedEventArgs e) => ApplyUninstallFilter();
+
+    private void OnUninstallClearClick(object sender, RoutedEventArgs e)
+    {
+        foreach (UninstallRowViewModel row in _allUninstall)
+        {
+            row.IsSelected = false;
+        }
+    }
+
+    private async Task LoadUninstallListAsync()
+    {
+        if (_working)
+        {
+            return;
+        }
+
+        if (!_wingetReady)
+        {
+            UninstallCountText.Text = "winget not available: cannot read the installed apps.";
+            return;
+        }
+
+        SetUninstallBusy(true, "Reading installed apps...");
+        try
+        {
+            List<WingetSearchResult> apps = await WingetService.GetAllInstalledAsync();
+
+            // Keep the ticks the user already made.
+            var ticked = new HashSet<string>(
+                _allUninstall.Where(r => r.IsSelected).Select(r => r.Id),
+                StringComparer.OrdinalIgnoreCase);
+
+            _allUninstall.Clear();
+            foreach (WingetSearchResult app in apps)
+            {
+                var row = new UninstallRowViewModel(app) { IsSelected = ticked.Contains(app.Id) };
+                row.PropertyChanged += (_, _) => UpdateUninstallSummary();
+                _allUninstall.Add(row);
+            }
+
+            ApplyUninstallFilter();
+
+            if (apps.Count == 0)
+            {
+                UninstallCountText.Text = "Could not read the installed apps.";
+            }
+        }
+        finally
+        {
+            SetUninstallBusy(false, "");
+        }
+    }
+
+    private void ApplyUninstallFilter()
+    {
+        string filter = UninstallFilterBox.Text.Trim();
+
+        _uninstallShown.Clear();
+        foreach (UninstallRowViewModel row in _allUninstall)
+        {
+            if (filter.Length == 0
+                || row.Name.Contains(filter, StringComparison.CurrentCultureIgnoreCase)
+                || row.Id.Contains(filter, StringComparison.CurrentCultureIgnoreCase))
+            {
+                _uninstallShown.Add(row);
+            }
+        }
+
+        UpdateUninstallSummary();
+    }
+
+    private void UpdateUninstallSummary()
+    {
+        if (_allUninstall.Count == 0)
+        {
+            return;
+        }
+
+        int ticked = _allUninstall.Count(r => r.IsSelected);
+        UninstallCountText.Text = _uninstallShown.Count + " of " + _allUninstall.Count + " apps"
+            + (ticked > 0 ? "  ·  " + ticked + " selected" : "");
+    }
+
+    private void SetUninstallBusy(bool busy, string status)
+    {
+        UninstallRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
+        UninstallButton.IsEnabled = !busy;
+        UninstallClearButton.IsEnabled = !busy;
+        UninstallRefreshButton.IsEnabled = !busy;
+        UninstallStatusText.Text = status;
+    }
+
+    private async void OnUninstallClick(object sender, RoutedEventArgs e)
+    {
+        if (_working)
+        {
+            return;
+        }
+
+        if (!RequireWinget("Uninstalling requires winget."))
+        {
+            return;
+        }
+
+        List<UninstallRowViewModel> targets = _allUninstall.Where(r => r.IsSelected).ToList();
+        if (targets.Count == 0)
+        {
+            ShowMessage("No app selected", "Tick the apps to uninstall.", Wpf.Ui.Controls.InfoBarSeverity.Informational);
+            return;
+        }
+
+        string list = string.Join("\n", targets.Take(15).Select(t => "•  " + t.Name));
+        if (targets.Count > 15)
+        {
+            list += "\n... and " + (targets.Count - 15);
+        }
+
+        bool confirmed = await Dialogs.ConfirmAsync(
+            "Uninstall " + targets.Count + " apps from the PC?",
+            list + "\n\nThis removes the programs from Windows. Some uninstallers may show their own window.",
+            "Uninstall");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var failed = new List<string>();
+        var removed = new List<UninstallRowViewModel>();
+        int done = 0;
+
+        _working = true;
+        InstallButton.IsEnabled = false;
+        RemoveFromListButton.IsEnabled = false;
+        try
+        {
+            foreach (UninstallRowViewModel row in targets)
+            {
+                row.Status = "Queued";
+            }
+
+            foreach (UninstallRowViewModel row in targets)
+            {
+                done++;
+                SetUninstallBusy(true, "Uninstalling " + done + " of " + targets.Count + ": " + row.Name);
+                row.Status = "Uninstalling...";
+
+                (bool ok, string message) = await WingetService.UninstallAsync(row.Id);
+
+                TweakEngine.LogChange("app." + row.Id, "uninstall", ok ? "succeeded" : "failed: " + message);
+
+                if (ok)
+                {
+                    removed.Add(row);
+                    _installedIds?.Remove(row.Id);
+                    row.Status = "Uninstalled";
+                }
+                else
+                {
+                    failed.Add(row.Name);
+                    row.Status = "Error: " + message;
+                }
+            }
+        }
+        finally
+        {
+            _working = false;
+            InstallButton.IsEnabled = true;
+            RemoveFromListButton.IsEnabled = true;
+            SetUninstallBusy(false, "");
+        }
+
+        // Uninstalled apps leave the list; the ones that failed stay, with the reason.
+        foreach (UninstallRowViewModel row in removed)
+        {
+            _allUninstall.Remove(row);
+        }
+
+        ApplyUninstallFilter();
+        ApplyInstalledState();
+        UpdateSelectionSummary();
+
+        if (failed.Count == 0)
+        {
+            ShowMessage("Uninstallation completed", targets.Count + " apps.", Wpf.Ui.Controls.InfoBarSeverity.Success);
+        }
+        else
+        {
+            ShowMessage(
+                "Uninstallation completed with errors",
+                "Failed for: " + string.Join(", ", failed) + ". The reason is shown next to each app.",
+                Wpf.Ui.Controls.InfoBarSeverity.Warning);
+        }
     }
 
     // ---------- App updates ----------
