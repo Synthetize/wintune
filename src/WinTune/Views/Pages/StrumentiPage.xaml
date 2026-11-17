@@ -1,0 +1,235 @@
+<Page
+    x:Class="WinTune.Views.Pages.StrumentiPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Utilities"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded">
+    <StackPanel Margin="32,24,32,32">
+        <ui:TextBlock
+            Margin="0,0,0,16"
+            FontTypography="Title"
+            Text="Utilities" />
+
+        <ui:InfoBar
+            x:Name="MessageBar"
+            Margin="0,0,0,12"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <!--  Timed shutdown  -->
+        <ui:Card Margin="0,0,0,12" Padding="20">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Scheduled shutdown" />
+                <ui:TextBlock
+                    Margin="0,2,0,14"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Shutdown and restart stay scheduled even if you close WinTune. For sleep, WinTune must stay open."
+                    TextWrapping="Wrap" />
+                <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                    <ui:Button
+                        Margin="0,0,8,0"
+                        Click="OnPresetClick"
+                        Content="15 min"
+                        Tag="15" />
+                    <ui:Button
+                        Margin="0,0,8,0"
+                        Click="OnPresetClick"
+                        Content="30 min"
+                        Tag="30" />
+                    <ui:Button
+                        Margin="0,0,8,0"
+                        Click="OnPresetClick"
+                        Content="1 hour"
+                        Tag="60" />
+                    <ui:Button
+                        Click="OnPresetClick"
+                        Content="2 hours"
+                        Tag="120" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock
+                        Margin="0,0,8,0"
+                        VerticalAlignment="Center"
+                        Text="Minutes" />
+                    <TextBox
+                        x:Name="MinutesBox"
+                        Width="90"
+                        VerticalAlignment="Center"
+                        Text="60" />
+                    <ComboBox
+                        x:Name="ActionBox"
+                        Width="150"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        SelectedIndex="0">
+                        <ComboBoxItem Content="Shut down" />
+                        <ComboBoxItem Content="Restart" />
+                        <ComboBoxItem Content="Sleep" />
+                    </ComboBox>
+                    <ui:Button
+                        Margin="12,0,0,0"
+                        Appearance="Primary"
+                        Click="OnStartShutdownClick"
+                        Content="Start"
+                        Icon="{ui:SymbolIcon Play24}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Click="OnCancelShutdownClick"
+                        Content="Cancel"
+                        Icon="{ui:SymbolIcon Dismiss24}" />
+                </StackPanel>
+                <ui:TextBlock
+                    x:Name="CountdownText"
+                    Margin="0,14,0,0"
+                    FontTypography="BodyStrong"
+                    Text="No shutdown scheduled." />
+            </StackPanel>
+        </ui:Card>
+
+        <!--  Restore point  -->
+        <ui:Card Margin="0,0,0,12" Padding="20">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Restore point" />
+                <ui:TextBlock
+                    Margin="0,2,0,14"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Recommended before changing privacy, services and preinstalled apps. Creating it can take a minute."
+                    TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button
+                        x:Name="CreateRestoreButton"
+                        Appearance="Primary"
+                        Click="OnCreateRestorePointClick"
+                        Content="Create restore point"
+                        Icon="{ui:SymbolIcon Save24}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Click="OnOpenRestoreWizardClick"
+                        Content="Restore..."
+                        Icon="{ui:SymbolIcon History24}" />
+                    <ui:ProgressRing
+                        x:Name="RestoreRing"
+                        Width="22"
+                        Height="22"
+                        Margin="14,0,0,0"
+                        IsIndeterminate="True"
+                        Visibility="Collapsed" />
+                </StackPanel>
+                <TextBlock
+                    x:Name="RestoreStatusText"
+                    Margin="0,12,0,0"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Last point: reading..."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ui:Card>
+
+        <!--  Profile  -->
+        <ui:Card Margin="0,0,0,12" Padding="20">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Profile" />
+                <ui:TextBlock
+                    Margin="0,2,0,14"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="The profile holds the wanted state of all optimizations. Export it to reapply it after a reinstall or on another PC."
+                    TextWrapping="Wrap" />
+                <StackPanel Orientation="Horizontal">
+                    <ui:Button
+                        Click="OnSaveProfileClick"
+                        Content="Save the current state"
+                        Icon="{ui:SymbolIcon Save24}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Click="OnExportProfileClick"
+                        Content="Export..."
+                        Icon="{ui:SymbolIcon ArrowUpload24}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Click="OnImportProfileClick"
+                        Content="Import..."
+                        Icon="{ui:SymbolIcon ArrowDownload24}" />
+                    <ui:Button
+                        Margin="8,0,0,0"
+                        Click="OnOpenDataFolderClick"
+                        Content="Open data folder" />
+                </StackPanel>
+                <TextBlock
+                    x:Name="ProfileStatusText"
+                    Margin="0,12,0,0"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </ui:Card>
+
+        <!--  Disk cleanup  -->
+        <ui:Card Padding="20">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Disk cleanup" />
+                <ui:TextBlock
+                    Margin="0,2,0,10"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Tick what to delete. Files in use are skipped. The Recycle Bin is not ticked at first because its content cannot be recovered."
+                    TextWrapping="Wrap" />
+                <ItemsControl x:Name="CleanupList" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox
+                                    Grid.Column="0"
+                                    MinWidth="0"
+                                    MinHeight="28"
+                                    Padding="4,2"
+                                    IsChecked="{Binding IsSelected, Mode=TwoWay}"
+                                    ToolTip="{Binding Description}">
+                                    <TextBlock Text="{Binding Name}" />
+                                </CheckBox>
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="12,0,0,0"
+                                    VerticalAlignment="Center"
+                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                    Text="{Binding SizeText}" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
+                    <ui:Button
+                        x:Name="CleanButton"
+                        Appearance="Primary"
+                        Click="OnCleanClick"
+                        Content="Clean selected"
+                        Icon="{ui:SymbolIcon Delete24}" />
+                    <ui:Button
+                        x:Name="MeasureButton"
+                        Margin="8,0,0,0"
+                        Click="OnMeasureClick"
+                        Content="Calculate space" />
+                    <ui:ProgressRing
+                        x:Name="CleanupRing"
+                        Width="20"
+                        Height="20"
+                        Margin="14,0,0,0"
+                        IsIndeterminate="True"
+                        Visibility="Collapsed" />
+                    <TextBlock
+                        x:Name="CleanupStatusText"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                </StackPanel>
+            </StackPanel>
+        </ui:Card>
+    </StackPanel>
+</Page>

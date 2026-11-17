@@ -1,0 +1,223 @@
+<Page
+    x:Class="WinTune.Views.Pages.OttimizzazioniPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:vm="clr-namespace:WinTune.ViewModels"
+    Title="Optimizations"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded">
+    <Page.Resources>
+
+        <vm:TileRowWidthConverter x:Key="RowWidth" />
+
+        <!--  Compact tile with switch: title and state on the left, switch on the right  -->
+        <DataTemplate DataType="{x:Type vm:ToggleTweakViewModel}">
+            <Grid Width="272" Margin="0,0,8,8">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" SharedSizeGroup="TweakTile" />
+                </Grid.RowDefinitions>
+                <Border
+                    Padding="10,6"
+                    Background="{DynamicResource ControlFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6">
+                    <Border.ToolTip>
+                        <ToolTip>
+                            <TextBlock
+                                MaxWidth="340"
+                                Text="{Binding Help}"
+                                TextWrapping="Wrap" />
+                        </ToolTip>
+                    </Border.ToolTip>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock
+                                FontSize="13"
+                                Text="{Binding Title}"
+                                TextWrapping="Wrap" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Text="{Binding StateLine}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                        <ui:ToggleSwitch
+                            Grid.Column="1"
+                            Margin="8,0,0,0"
+                            VerticalAlignment="Center"
+                            IsChecked="{Binding IsOn, Mode=TwoWay}" />
+                    </Grid>
+                </Border>
+            </Grid>
+        </DataTemplate>
+
+        <!--  Entry with a drop-down list: takes the whole row, with the explanation under the title  -->
+        <DataTemplate DataType="{x:Type vm:ChoiceTweakViewModel}">
+            <Border
+                Width="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=ItemsControl}, Converter={StaticResource RowWidth}}"
+                Margin="0,0,8,8"
+                Padding="10,6"
+                Background="{DynamicResource ControlFillColorDefaultBrush}"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="6">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                        <TextBlock
+                            FontSize="13"
+                            Text="{Binding Title}"
+                            TextWrapping="Wrap" />
+                        <TextBlock
+                            FontSize="11"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Text="{Binding Help}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ComboBox
+                        Grid.Column="1"
+                        Width="230"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Center"
+                        DisplayMemberPath="Label"
+                        ItemsSource="{Binding Options}"
+                        SelectedItem="{Binding Selected, Mode=TwoWay}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!--  Category: the tiles sit side by side and are all the same height  -->
+        <DataTemplate DataType="{x:Type vm:TweakGroup}">
+            <StackPanel Margin="0,0,0,12">
+                <ui:TextBlock
+                    Margin="0,0,0,6"
+                    FontTypography="BodyStrong"
+                    Text="{Binding Name}" />
+                <ItemsControl
+                    Focusable="False"
+                    Grid.IsSharedSizeScope="True"
+                    ItemsSource="{Binding Items}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+
+    </Page.Resources>
+
+    <StackPanel Margin="32,24,32,32">
+        <Grid Margin="0,0,0,16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0">
+                <ui:TextBlock FontTypography="Title" Text="Optimizations" />
+                <ui:TextBlock
+                    Margin="0,4,0,0"
+                    FontTypography="Body"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Each switch shows the current state and can be undone. Hover over an item for the explanation."
+                    TextWrapping="Wrap" />
+            </StackPanel>
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Orientation="Horizontal">
+                <ui:Button
+                    Margin="0,0,8,0"
+                    Click="OnRefreshClick"
+                    Content="Refresh status"
+                    Icon="{ui:SymbolIcon ArrowSync24}" />
+                <ui:Button
+                    Margin="0,0,8,0"
+                    Click="OnRestartExplorerClick"
+                    Content="Restart File Explorer" />
+                <ui:Button
+                    Appearance="Primary"
+                    Click="OnApplyRecommendedClick"
+                    Content="Apply recommended"
+                    Icon="{ui:SymbolIcon Checkmark24}" />
+            </StackPanel>
+        </Grid>
+
+        <!--  Category filter: the buttons are created by the code  -->
+        <WrapPanel x:Name="FilterPanel" Margin="0,0,0,8" />
+
+        <ui:InfoBar
+            x:Name="MessageBar"
+            Margin="0,0,0,12"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <ItemsControl x:Name="GroupsList" Focusable="False" />
+
+        <!--  One-time actions: they have no state, they just run  -->
+        <StackPanel x:Name="ActionsPanel">
+            <ui:TextBlock
+                Margin="0,0,0,2"
+                FontTypography="BodyStrong"
+                Text="Actions" />
+            <TextBlock
+                Margin="0,0,0,6"
+                FontSize="12"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                Text="One-time operations. The same functions, with more detail, are also in Utilities."
+                TextWrapping="Wrap" />
+            <WrapPanel>
+                <ui:Button
+                    x:Name="RestorePointButton"
+                    Margin="0,0,8,8"
+                    Click="OnCreateRestorePointClick"
+                    Content="Create restore point"
+                    Icon="{ui:SymbolIcon History24}" />
+                <ui:Button
+                    x:Name="DeleteTempButton"
+                    Margin="0,0,8,8"
+                    Click="OnDeleteTempClick"
+                    Content="Delete temporary files"
+                    Icon="{ui:SymbolIcon Delete24}" />
+                <ui:Button
+                    Margin="0,0,8,8"
+                    Click="OnWindowsCleanupClick"
+                    Content="Windows Disk Cleanup"
+                    ToolTip="Runs Disk Cleanup and Windows component cleanup (cleanmgr and DISM)" />
+                <ui:Button
+                    Margin="0,0,8,8"
+                    Click="OnRemoveWidgetsClick"
+                    Content="Uninstall widgets"
+                    ToolTip="Removes the Windows 11 widgets components. They can be reinstalled from the Microsoft Store." />
+                <ui:Button
+                    Margin="0,0,8,8"
+                    Click="OnRemoveOneDriveClick"
+                    Content="Uninstall OneDrive"
+                    ToolTip="Uninstalls the OneDrive program. The files in your OneDrive folder are not deleted." />
+                <ui:ProgressRing
+                    x:Name="ActionsRing"
+                    Width="18"
+                    Height="18"
+                    Margin="4,0,8,8"
+                    IsIndeterminate="True"
+                    Visibility="Collapsed" />
+                <TextBlock
+                    x:Name="ActionsStatusText"
+                    Margin="0,0,0,8"
+                    VerticalAlignment="Center"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+            </WrapPanel>
+        </StackPanel>
+    </StackPanel>
+</Page>

@@ -1,0 +1,250 @@
+<Page
+    x:Class="WinTune.Views.Pages.ToolPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Tools"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Loaded="OnLoaded">
+    <StackPanel Margin="32,24,32,32">
+        <ui:TextBlock FontTypography="Title" Text="Tools" />
+        <ui:TextBlock
+            Margin="0,2,0,12"
+            FontTypography="Caption"
+            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+            Text="The programs you always use: installation, start with Windows and configuration backup, so everything comes back as it was after a reinstall."
+            TextWrapping="Wrap" />
+
+        <ui:InfoBar
+            x:Name="MessageBar"
+            Margin="0,0,0,10"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <StackPanel Margin="0,0,0,10" Orientation="Horizontal">
+            <ui:Button
+                x:Name="RefreshButton"
+                Click="OnRefreshClick"
+                Content="Refresh status"
+                Icon="{ui:SymbolIcon ArrowSync24}" />
+            <ui:ProgressRing
+                x:Name="BusyRing"
+                Width="18"
+                Height="18"
+                Margin="12,0,0,0"
+                IsIndeterminate="True"
+                Visibility="Collapsed" />
+            <TextBlock
+                x:Name="BusyText"
+                Margin="10,0,0,0"
+                VerticalAlignment="Center"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!--  Where to install the tools  -->
+        <StackPanel Margin="0,0,0,10">
+            <CheckBox
+                x:Name="BesideBox"
+                MinWidth="0"
+                MinHeight="28"
+                Padding="4,2"
+                Click="OnBesideClick">
+                <TextBlock Text="Install tools in a folder next to WinTune, instead of Program Files" />
+            </CheckBox>
+            <TextBlock
+                x:Name="FolderText"
+                Margin="4,0,0,0"
+                FontSize="12"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <ItemsControl
+            x:Name="ToolsList"
+            Focusable="False"
+            Grid.IsSharedSizeScope="True">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <!--  The shared row makes all the tiles as tall as the tallest  -->
+                    <Grid Width="430" Margin="0,0,10,10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" SharedSizeGroup="ToolTile" />
+                        </Grid.RowDefinitions>
+                        <Border
+                            Padding="14,10,14,12"
+                            Background="{DynamicResource ControlFillColorDefaultBrush}"
+                            BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                            BorderThickness="1"
+                            CornerRadius="6">
+                            <StackPanel>
+                                <!--  Name and state  -->
+                                <TextBlock
+                                    FontSize="15"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                    Text="{Binding Description}"
+                                    TextWrapping="Wrap" />
+                                <TextBlock
+                                    Margin="0,6,0,8"
+                                    FontWeight="SemiBold"
+                                    Foreground="{Binding StatusBrush}"
+                                    Text="{Binding StatusText}"
+                                    ToolTip="{Binding FolderText}" />
+
+                                <!--  Not installed  -->
+                                <StackPanel Visibility="{Binding MissingVisibility}">
+                                    <WrapPanel>
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Appearance="Primary"
+                                            Click="OnInstallClick"
+                                            Content="Install"
+                                            Icon="{ui:SymbolIcon ArrowDownload24}" />
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Click="OnLocateClick"
+                                            Content="Already installed: choose where" />
+                                    </WrapPanel>
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="If you use the portable version, point to the program .exe file."
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!--  Tools to run as a script, without installation  -->
+                                <StackPanel Visibility="{Binding ScriptVisibility}">
+                                    <ui:Button
+                                        Margin="0,0,0,8"
+                                        Appearance="Primary"
+                                        Click="OnRunScriptClick"
+                                        Content="Run as administrator"
+                                        Icon="{ui:SymbolIcon Play24}" />
+                                    <TextBlock
+                                        FontSize="12"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding ScriptNote}"
+                                        TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <!--  Installed  -->
+                                <StackPanel Visibility="{Binding InstalledVisibility}">
+                                    <WrapPanel>
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Appearance="Primary"
+                                            Click="OnOpenClick"
+                                            Content="Open"
+                                            Icon="{ui:SymbolIcon Open24}" />
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Click="OnCloseClick"
+                                            Content="Close"
+                                            Visibility="{Binding CloseVisibility}" />
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Click="OnOpenFolderClick"
+                                            Content="Open folder" />
+                                    </WrapPanel>
+
+                                    <!--  Start with Windows, configuration and profiles: only for programs that have them  -->
+                                    <StackPanel Visibility="{Binding ExtrasVisibility}">
+                                    <Border
+                                        Height="1"
+                                        Margin="0,4,0,8"
+                                        Background="{DynamicResource ControlStrokeColorDefaultBrush}" />
+
+                                    <!--  Start with Windows  -->
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                            <TextBlock FontWeight="SemiBold" Text="Start with Windows" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding AutostartText}"
+                                                TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <ui:ToggleSwitch
+                                            Grid.Column="1"
+                                            Margin="12,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Click="OnAutostartClick"
+                                            IsChecked="{Binding IsAutostart, Mode=OneWay}" />
+                                    </Grid>
+
+                                    <Border
+                                        Height="1"
+                                        Margin="0,8,0,8"
+                                        Background="{DynamicResource ControlStrokeColorDefaultBrush}" />
+
+                                    <!--  Configuration  -->
+                                    <TextBlock FontWeight="SemiBold" Text="Configuration" />
+                                    <TextBlock
+                                        Margin="0,0,0,6"
+                                        FontSize="12"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding BackupText}"
+                                        TextWrapping="Wrap" />
+                                    <WrapPanel>
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Click="OnBackupClick"
+                                            Content="Save"
+                                            Icon="{ui:SymbolIcon Save24}"
+                                            ToolTip="Copies the current configuration into the WinTune data" />
+                                        <ui:Button
+                                            Margin="0,0,8,6"
+                                            Click="OnRestoreClick"
+                                            Content="Restore"
+                                            Icon="{ui:SymbolIcon History24}"
+                                            IsEnabled="{Binding CanRestore}"
+                                            ToolTip="Puts the saved configuration back in place" />
+                                    </WrapPanel>
+
+                                    <!--  Profiles that can be activated on the fly  -->
+                                    <StackPanel Margin="0,6,0,0" Visibility="{Binding ProfilesVisibility}">
+                                        <TextBlock
+                                            Margin="0,0,0,4"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding ProfileLabel}" />
+                                        <ItemsControl Focusable="False" ItemsSource="{Binding Profiles}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <ui:Button
+                                                        Margin="0,0,6,6"
+                                                        Padding="10,4"
+                                                        Click="OnProfileClick"
+                                                        Content="{Binding Name}"
+                                                        ToolTip="{Binding FilePath}" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+    </StackPanel>
+</Page>

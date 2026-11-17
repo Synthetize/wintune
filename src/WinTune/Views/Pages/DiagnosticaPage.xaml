@@ -1,0 +1,203 @@
+<Page
+    x:Class="WinTune.Views.Pages.DiagnosticaPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Diagnostics"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Loaded="OnLoaded">
+    <StackPanel Margin="32,24,32,32">
+        <ui:TextBlock FontTypography="Title" Text="Diagnostics" />
+        <ui:TextBlock
+            Margin="0,2,0,12"
+            FontTypography="Caption"
+            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+            Text="Windows events that explain crashes, sudden shutdowns and instability."
+            TextWrapping="Wrap" />
+
+        <ui:InfoBar
+            x:Name="MessageBar"
+            Margin="0,0,0,10"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <!--  Period and summary  -->
+        <WrapPanel Margin="0,0,0,8">
+            <TextBlock
+                Margin="0,0,8,6"
+                VerticalAlignment="Center"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                Text="Period" />
+            <ComboBox
+                x:Name="PeriodBox"
+                Width="170"
+                Margin="0,0,8,6"
+                VerticalAlignment="Center"
+                SelectedIndex="1"
+                SelectionChanged="OnPeriodChanged">
+                <ComboBoxItem Content="Last 7 days" Tag="7" />
+                <ComboBoxItem Content="Last 30 days" Tag="30" />
+                <ComboBoxItem Content="Last 90 days" Tag="90" />
+            </ComboBox>
+            <ui:Button
+                x:Name="RefreshButton"
+                Margin="0,0,8,6"
+                Click="OnRefreshClick"
+                Content="Refresh"
+                Icon="{ui:SymbolIcon ArrowSync24}" />
+            <ui:ProgressRing
+                x:Name="LoadRing"
+                Width="18"
+                Height="18"
+                Margin="4,0,0,6"
+                IsIndeterminate="True"
+                Visibility="Collapsed" />
+        </WrapPanel>
+
+        <ItemsControl
+            x:Name="SummaryList"
+            Margin="0,0,0,4"
+            Focusable="False">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <WrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <Border
+                        Width="150"
+                        Height="72"
+                        Margin="0,0,8,8"
+                        Padding="10,6"
+                        Background="{DynamicResource ControlFillColorDefaultBrush}"
+                        BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                        BorderThickness="1"
+                        CornerRadius="6">
+                        <StackPanel VerticalAlignment="Center">
+                            <TextBlock
+                                FontSize="22"
+                                FontWeight="SemiBold"
+                                Text="{Binding Value}" />
+                            <TextBlock
+                                FontSize="11"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Text="{Binding Label}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </Border>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <!--  Category filter: the buttons are created by the code  -->
+        <WrapPanel x:Name="FilterPanel" Margin="0,0,0,4" />
+
+        <!--  Events  -->
+        <ui:Card Margin="0,0,0,10" Padding="16,10">
+            <StackPanel>
+                <TextBlock
+                    x:Name="EventsStatusText"
+                    Margin="0,2,0,6"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Reading events..."
+                    TextWrapping="Wrap" />
+                <ScrollViewer MaxHeight="430" VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="EventsList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Padding="0,4"
+                                    Background="Transparent"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    ToolTip="{Binding Details}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="122" />
+                                            <ColumnDefinition Width="118" />
+                                            <ColumnDefinition Width="210" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            FontSize="12"
+                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding TimeText}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            FontSize="12"
+                                            FontWeight="SemiBold"
+                                            Text="{Binding Category}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            FontSize="12"
+                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                            Text="{Binding SourceText}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="3"
+                                            FontSize="12"
+                                            Text="{Binding Explanation}"
+                                            TextTrimming="CharacterEllipsis" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </ui:Card>
+
+        <!--  Blue screens and Windows tools  -->
+        <ui:Card Margin="0,0,0,10" Padding="16">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Blue screens and Windows tools" />
+                <TextBlock
+                    x:Name="MinidumpText"
+                    Margin="0,6,0,8"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <WrapPanel>
+                    <ui:Button
+                        x:Name="MinidumpButton"
+                        Margin="0,0,8,6"
+                        Click="OnOpenMinidumpClick"
+                        Content="Open the dump folder" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnOpenReliabilityClick"
+                        Content="Reliability Monitor" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnOpenEventViewerClick"
+                        Content="Event Viewer" />
+                </WrapPanel>
+            </StackPanel>
+        </ui:Card>
+
+        <!--  System health  -->
+        <ui:Card Padding="16">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="System health" />
+                <ui:TextBlock
+                    Margin="0,2,0,8"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Windows checks on the system files. They open in a separate window and can take several minutes. The disk status is in the Overview."
+                    TextWrapping="Wrap" />
+                <WrapPanel>
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnRunSfcClick"
+                        Content="Check system files (sfc)" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnRunDismClick"
+                        Content="Repair the Windows image (DISM)" />
+                </WrapPanel>
+            </StackPanel>
+        </ui:Card>
+    </StackPanel>
+</Page>

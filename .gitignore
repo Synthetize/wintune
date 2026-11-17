@@ -1,0 +1,22 @@
+# Build output (already compiled files)
+bin/
+obj/
+dist/
+publish/
+build.log
+*.exe
+*.dll
+*.pdb
+*.zip
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+*.csproj.user
+
+# OS
+Thumbs.db
+desktop.ini
