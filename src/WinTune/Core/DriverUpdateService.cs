@@ -15,8 +15,8 @@ public static class DriverUpdateService
     private const string SearchingKey = @"SOFTWARE\Microsoft\Windows\CurrentVersion\DriverSearching";
     private const string SearchingValue = "SearchOrderConfig";
     private const string StateKey = @"SOFTWARE\WinTune";
-    private const string UntilValue = "DriverDisattivatiFinoAl";
-    private const string TaskName = "RiattivaDriverAutomatici";
+    private const string UntilValue = "DriverDisabledUntil";
+    private const string TaskName = "ReEnableAutomaticDrivers";
 
     /// <summary>True if Windows Update does not install drivers.</summary>
     public static bool IsBlocked =>
@@ -73,7 +73,7 @@ public static class DriverUpdateService
             RegistryUtil.DeleteValue(RegistryHive.LocalMachine, StateKey, UntilValue);
         }
 
-        TweakEngine.LogChange("driver.automatici", before, Describe());
+        TweakEngine.LogChange("driver.automatic", before, Describe());
     }
 
     /// <summary>Turns automatic drivers back on immediately.</summary>
@@ -86,7 +86,7 @@ public static class DriverUpdateService
         RegistryUtil.DeleteValue(RegistryHive.LocalMachine, StateKey, UntilValue);
         ScheduledTaskUtil.Delete(TaskName);
 
-        TweakEngine.LogChange("driver.automatici", before, Describe());
+        TweakEngine.LogChange("driver.automatic", before, Describe());
     }
 
     /// <summary>
@@ -129,11 +129,11 @@ public static class DriverUpdateService
     {
         if (!IsBlocked)
         {
-            return "attivi";
+            return "enabled";
         }
 
         DateTime? until = ReadDate(UntilValue);
-        return until.HasValue ? "disabled until " + until.Value.ToString("dd/MM/yyyy") : "disattivati";
+        return until.HasValue ? "disabled until " + until.Value.ToString("dd/MM/yyyy") : "disabled";
     }
 
     private static void TrySetSearchOrder(int value)

@@ -5,9 +5,9 @@ using WinTune.Core;
 
 namespace WinTune.Views.Pages;
 
-public partial class AggiornamentiPage : Page
+public partial class UpdatesPage : Page
 {
-    public AggiornamentiPage()
+    public UpdatesPage()
     {
         InitializeComponent();
     }
@@ -31,17 +31,17 @@ public partial class AggiornamentiPage : Page
     {
         get
         {
-            if (ModeNotifica.IsChecked == true)
+            if (ModeNotifyOnly.IsChecked == true)
             {
-                return UpdateMode.SoloNotifica;
+                return UpdateMode.NotifyOnly;
             }
 
-            if (ModePausa.IsChecked == true)
+            if (ModePaused.IsChecked == true)
             {
-                return UpdateMode.InPausa;
+                return UpdateMode.Paused;
             }
 
-            return ModeDisattivati.IsChecked == true ? UpdateMode.Disattivati : UpdateMode.Attivi;
+            return ModeDisabled.IsChecked == true ? UpdateMode.Disabled : UpdateMode.Enabled;
         }
     }
 
@@ -54,10 +54,10 @@ public partial class AggiornamentiPage : Page
 
             if (selectCurrentMode)
             {
-                ModeAttivi.IsChecked = mode == UpdateMode.Attivi;
-                ModeNotifica.IsChecked = mode == UpdateMode.SoloNotifica;
-                ModePausa.IsChecked = mode == UpdateMode.InPausa;
-                ModeDisattivati.IsChecked = mode == UpdateMode.Disattivati;
+                ModeEnabled.IsChecked = mode == UpdateMode.Enabled;
+                ModeNotifyOnly.IsChecked = mode == UpdateMode.NotifyOnly;
+                ModePaused.IsChecked = mode == UpdateMode.Paused;
+                ModeDisabled.IsChecked = mode == UpdateMode.Disabled;
             }
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public partial class AggiornamentiPage : Page
     private void UpdateDurationControls()
     {
         // Events also arrive while the page is being created, when not all the controls exist.
-        if (DurationBox is null || UntilPicker is null || DurationLabel is null || ModeDisattivati is null)
+        if (DurationBox is null || UntilPicker is null || DurationLabel is null || ModeDisabled is null)
         {
             return;
         }
 
         UpdateMode mode = SelectedMode;
-        bool needsDuration = mode == UpdateMode.InPausa || mode == UpdateMode.Disattivati;
+        bool needsDuration = mode == UpdateMode.Paused || mode == UpdateMode.Disabled;
 
         DurationBox.IsEnabled = needsDuration;
         DurationLabel.Opacity = needsDuration ? 1.0 : 0.5;
@@ -110,7 +110,7 @@ public partial class AggiornamentiPage : Page
         UpdateMode mode = SelectedMode;
         DateTime? until = null;
 
-        if (mode == UpdateMode.InPausa || mode == UpdateMode.Disattivati)
+        if (mode == UpdateMode.Paused || mode == UpdateMode.Disabled)
         {
             if (!DurationHelper.TryResolve(DurationBox, UntilPicker, out until, out string error))
             {
@@ -118,14 +118,14 @@ public partial class AggiornamentiPage : Page
                 return;
             }
 
-            if (mode == UpdateMode.InPausa && !until.HasValue)
+            if (mode == UpdateMode.Paused && !until.HasValue)
             {
                 ShowMessage("Duration missing", "For the pause, pick a duration or a date.", Wpf.Ui.Controls.InfoBarSeverity.Warning);
                 return;
             }
         }
 
-        if (mode == UpdateMode.Disattivati)
+        if (mode == UpdateMode.Disabled)
         {
             bool confirmed = await Dialogs.ConfirmAsync(
                 "Turn off updates?",

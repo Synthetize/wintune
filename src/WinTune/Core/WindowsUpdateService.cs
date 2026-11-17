@@ -6,10 +6,10 @@ namespace WinTune.Core;
 
 public enum UpdateMode
 {
-    Attivi,
-    SoloNotifica,
-    InPausa,
-    Disattivati,
+    Enabled,
+    NotifyOnly,
+    Paused,
+    Disabled,
 }
 
 /// <summary>Windows Update modes: on, notify only, paused until a date, off.</summary>
@@ -17,8 +17,8 @@ public static class WindowsUpdateService
 {
     private const string AuPolicyKey = @"SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU";
     private const string UxSettingsKey = @"SOFTWARE\Microsoft\WindowsUpdate\UX\Settings";
-    private const string UntilValue = "AggiornamentiDisattivatiFinoAl";
-    private const string TaskName = "RiattivaAggiornamenti";
+    private const string UntilValue = "UpdatesDisabledUntil";
+    private const string TaskName = "ReEnableUpdates";
     private const string ServiceName = "wuauserv";
 
     private static readonly string[] PauseValues =
@@ -37,20 +37,20 @@ public static class WindowsUpdateService
         {
             if (RegistryUtil.GetDword(RegistryHive.LocalMachine, AuPolicyKey, "NoAutoUpdate") == 1)
             {
-                return UpdateMode.Disattivati;
+                return UpdateMode.Disabled;
             }
 
             if (PausedUntil.HasValue)
             {
-                return UpdateMode.InPausa;
+                return UpdateMode.Paused;
             }
 
             if (RegistryUtil.GetDword(RegistryHive.LocalMachine, AuPolicyKey, "AUOptions") == 2)
             {
-                return UpdateMode.SoloNotifica;
+                return UpdateMode.NotifyOnly;
             }
 
-            return UpdateMode.Attivi;
+            return UpdateMode.Enabled;
         }
     }
 
@@ -72,19 +72,19 @@ public static class WindowsUpdateService
 
     /// <summary>Date on which the disabled updates turn back on by themselves. Null if no expiry.</summary>
     public static DateTime? DisabledUntil =>
-        CurrentMode == UpdateMode.Disattivati ? DriverUpdateService.ReadDate(UntilValue) : null;
+        CurrentMode == UpdateMode.Disabled ? DriverUpdateService.ReadDate(UntilValue) : null;
 
     /// <summary>Short text of the current state, for the interface and the change log.</summary>
     public static string Describe()
     {
         switch (CurrentMode)
         {
-            case UpdateMode.Disattivati:
+            case UpdateMode.Disabled:
                 DateTime? until = DriverUpdateService.ReadDate(UntilValue);
                 return until.HasValue ? "Disabled until " + until.Value.ToString("dd/MM/yyyy") : "Disabled with no expiry";
-            case UpdateMode.InPausa:
+            case UpdateMode.Paused:
                 return "Paused until " + (PausedUntil ?? DateTime.Now).ToString("dd/MM/yyyy");
-            case UpdateMode.SoloNotifica:
+            case UpdateMode.NotifyOnly:
                 return "Notify only";
             default:
                 return "Enabled";
@@ -97,12 +97,12 @@ public static class WindowsUpdateService
     /// </summary>
     public static void Apply(UpdateMode mode, DateTime? until)
     {
-        if (mode == UpdateMode.InPausa && (!until.HasValue || until.Value <= DateTime.Now))
+        if (mode == UpdateMode.Paused && (!until.HasValue || until.Value <= DateTime.Now))
         {
             throw new ArgumentException("A future date is required for the pause.");
         }
 
-        if (mode == UpdateMode.Disattivati && until.HasValue && until.Value.Date <= DateTime.Today)
+        if (mode == UpdateMode.Disabled && until.HasValue && until.Value.Date <= DateTime.Today)
         {
             throw new ArgumentException("The expiry date must be after today.");
         }
@@ -114,12 +114,12 @@ public static class WindowsUpdateService
 
         switch (mode)
         {
-            case UpdateMode.SoloNotifica:
+            case UpdateMode.NotifyOnly:
                 RegistryUtil.SetDword(RegistryHive.LocalMachine, AuPolicyKey, "NoAutoUpdate", 0);
                 RegistryUtil.SetDword(RegistryHive.LocalMachine, AuPolicyKey, "AUOptions", 2);
                 break;
 
-            case UpdateMode.InPausa:
+            case UpdateMode.Paused:
                 string start = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
                 string end = until!.Value.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
 
@@ -131,7 +131,7 @@ public static class WindowsUpdateService
                 RegistryUtil.SetString(RegistryHive.LocalMachine, UxSettingsKey, "PauseQualityUpdatesEndTime", end);
                 break;
 
-            case UpdateMode.Disattivati:
+            case UpdateMode.Disabled:
                 RegistryUtil.SetDword(RegistryHive.LocalMachine, AuPolicyKey, "NoAutoUpdate", 1);
                 TrySetService(false);
 
@@ -157,7 +157,7 @@ public static class WindowsUpdateService
                 break;
         }
 
-        TweakEngine.LogChange("aggiornamenti.modalita", before, Describe());
+        TweakEngine.LogChange("updates.mode", before, Describe());
     }
 
     /// <summary>
@@ -166,7 +166,7 @@ public static class WindowsUpdateService
     /// </summary>
     public static void EnforceExpiry()
     {
-        if (CurrentMode != UpdateMode.Disattivati)
+        if (CurrentMode != UpdateMode.Disabled)
         {
             return;
         }
@@ -174,7 +174,7 @@ public static class WindowsUpdateService
         DateTime? until = DriverUpdateService.ReadDate(UntilValue);
         if (until.HasValue && until.Value <= DateTime.Now)
         {
-            Apply(UpdateMode.Attivi, null);
+            Apply(UpdateMode.Enabled, null);
         }
     }
 

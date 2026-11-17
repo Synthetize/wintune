@@ -36,13 +36,11 @@ Sensors: [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHar
 
 Folder `%AppData%\WinTune`:
 
-- `profilo.json`: the profile;
-- `modifiche.log`: log of every change applied;
-- `errori.log`: unexpected errors, if any;
-- `servizi-originali.json`: original start type of the services that were disabled, so they can be restored as they were;
-- `impostazioni.json`, `notifiche.json`: app settings and update-notification state.
-
-(File names are still in Italian from the first version; they are kept so existing data keeps working.)
+- `profile.json`: the profile;
+- `changes.log`: log of every change applied;
+- `errors.log`: unexpected errors, if any;
+- `original-services.json`: original start type of the services that were disabled, so they can be restored as they were;
+- `settings.json`, `notifications.json`: app settings and update-notification state.
 
 ## Code layout
 

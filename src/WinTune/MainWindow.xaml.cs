@@ -31,7 +31,7 @@ public partial class MainWindow : Wpf.Ui.Controls.FluentWindow
             }
         };
 
-        Loaded += (_, _) => RootNavigation.Navigate(openApps ? typeof(AppPage) : typeof(PanoramicaPage));
+        Loaded += (_, _) => RootNavigation.Navigate(openApps ? typeof(AppPage) : typeof(OverviewPage));
     }
 
     /// <summary>Switches to another section, as if the user picked it from the side menu.</summary>

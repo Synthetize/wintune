@@ -8,13 +8,13 @@ namespace WinTune.Core;
 
 /// <summary>
 /// Turns Windows services on and off. Before turning one off it saves its original start type
-/// in servizi-originali.json, so turning it back on restores it as it was.
+/// in original-services.json, so turning it back on restores it as it was.
 /// </summary>
 internal static class ServiceUtil
 {
     private const string ServicesKey = @"SYSTEM\CurrentControlSet\Services\";
 
-    private static string OriginalsPath => Path.Combine(ProfileService.DataFolder, "servizi-originali.json");
+    private static string OriginalsPath => Path.Combine(ProfileService.DataFolder, "original-services.json");
 
     private static string Sc => ProcessRunner.SystemTool("sc.exe");
 

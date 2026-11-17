@@ -6,7 +6,7 @@ namespace WinTune.Core;
 /// <summary>Applies the optimizations and writes every change to the change log.</summary>
 public static class TweakEngine
 {
-    public static string ChangeLogPath => Path.Combine(ProfileService.DataFolder, "modifiche.log");
+    public static string ChangeLogPath => Path.Combine(ProfileService.DataFolder, "changes.log");
 
     /// <summary>Reads the current value. Null if reading fails.</summary>
     public static string? SafeRead(Tweak tweak)

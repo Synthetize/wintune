@@ -24,21 +24,21 @@ public sealed record SystemEvent(
 /// </summary>
 public static class EventLogService
 {
-    public const string Spegnimenti = "Shutdowns";
-    public const string SchermateBlu = "Blue screens";
+    public const string Shutdowns = "Shutdowns";
+    public const string BlueScreens = "Blue screens";
     public const string Hardware = "Hardware errors";
-    public const string Temperatura = "Temperature";
-    public const string SchedaVideo = "Graphics card";
-    public const string Dischi = "Disks";
-    public const string Memoria = "Memory";
-    public const string DriverServizi = "Drivers & services";
-    public const string Applicazioni = "Applications";
-    public const string Cambiamenti = "What changed";
+    public const string Temperature = "Temperature";
+    public const string GraphicsCard = "Graphics card";
+    public const string Disks = "Disks";
+    public const string Memory = "Memory";
+    public const string DriverServices = "Drivers & services";
+    public const string Applications = "Applications";
+    public const string Changes = "What changed";
 
     /// <summary>Categories in the order they are shown.</summary>
     public static IReadOnlyList<string> Categories { get; } = new[]
     {
-        Spegnimenti, SchermateBlu, Hardware, Temperatura, SchedaVideo, Dischi, Memoria, DriverServizi, Applicazioni, Cambiamenti,
+        Shutdowns, BlueScreens, Hardware, Temperature, GraphicsCard, Disks, Memory, DriverServices, Applications, Changes,
     };
 
     private static readonly XNamespace Ns = "http://schemas.microsoft.com/win/2004/08/events/event";
@@ -51,38 +51,38 @@ public static class EventLogService
 
     private static readonly Rule[] Rules =
     {
-        new("System", "Microsoft-Windows-Kernel-Power", new[] { 41 }, Spegnimenti, "Restart without a proper shutdown: freeze, reset or power loss"),
-        new("System", "EventLog", new[] { 6008 }, Spegnimenti, "Unexpected system shutdown"),
-        new("System", "User32", new[] { 1074, 1076 }, Spegnimenti, "Shutdown or restart requested by a program or by the user"),
+        new("System", "Microsoft-Windows-Kernel-Power", new[] { 41 }, Shutdowns, "Restart without a proper shutdown: freeze, reset or power loss"),
+        new("System", "EventLog", new[] { 6008 }, Shutdowns, "Unexpected system shutdown"),
+        new("System", "User32", new[] { 1074, 1076 }, Shutdowns, "Shutdown or restart requested by a program or by the user"),
 
-        new("System", "Microsoft-Windows-WER-SystemErrorReporting", new[] { 1001 }, SchermateBlu, "Blue screen: the code is in the message"),
-        new("System", "volmgr", new[] { 161 }, SchermateBlu, "Crash dump file not created"),
+        new("System", "Microsoft-Windows-WER-SystemErrorReporting", new[] { 1001 }, BlueScreens, "Blue screen: the code is in the message"),
+        new("System", "volmgr", new[] { 161 }, BlueScreens, "Crash dump file not created"),
 
         new("System", "Microsoft-Windows-WHEA-Logger", Array.Empty<int>(), Hardware, "Hardware error reported by the processor, memory or motherboard: typical of an unstable overclock or undervolt"),
 
-        new("System", "Microsoft-Windows-Kernel-Processor-Power", new[] { 37 }, Temperatura, "Processor speed limited by the firmware"),
+        new("System", "Microsoft-Windows-Kernel-Processor-Power", new[] { 37 }, Temperature, "Processor speed limited by the firmware"),
 
-        new("System", "Display", new[] { 4101 }, SchedaVideo, "The graphics driver stopped responding and was recovered"),
-        new("System", "amdwddmg", Array.Empty<int>(), SchedaVideo, "AMD graphics driver error", true),
-        new("System", "amdkmdag", Array.Empty<int>(), SchedaVideo, "AMD graphics driver error", true),
-        new("System", "nvlddmkm", Array.Empty<int>(), SchedaVideo, "NVIDIA graphics driver error", true),
+        new("System", "Display", new[] { 4101 }, GraphicsCard, "The graphics driver stopped responding and was recovered"),
+        new("System", "amdwddmg", Array.Empty<int>(), GraphicsCard, "AMD graphics driver error", true),
+        new("System", "amdkmdag", Array.Empty<int>(), GraphicsCard, "AMD graphics driver error", true),
+        new("System", "nvlddmkm", Array.Empty<int>(), GraphicsCard, "NVIDIA graphics driver error", true),
 
-        new("System", "disk", new[] { 7, 11, 51, 153 }, Dischi, "Read or write error on a disk"),
-        new("System", "stornvme", new[] { 11, 129 }, Dischi, "The NVMe drive did not respond and was reset"),
-        new("System", "storahci", new[] { 129 }, Dischi, "The SATA drive did not respond and was reset"),
-        new("System", "Ntfs", new[] { 55 }, Dischi, "Damaged file system: a disk check is needed"),
+        new("System", "disk", new[] { 7, 11, 51, 153 }, Disks, "Read or write error on a disk"),
+        new("System", "stornvme", new[] { 11, 129 }, Disks, "The NVMe drive did not respond and was reset"),
+        new("System", "storahci", new[] { 129 }, Disks, "The SATA drive did not respond and was reset"),
+        new("System", "Ntfs", new[] { 55 }, Disks, "Damaged file system: a disk check is needed"),
 
-        new("System", "Microsoft-Windows-MemoryDiagnostics-Results", new[] { 1101, 1102, 1201, 1202 }, Memoria, "Result of the Windows Memory Diagnostic"),
-        new("System", "Microsoft-Windows-Resource-Exhaustion-Detector", new[] { 2004 }, Memoria, "Virtual memory almost exhausted"),
+        new("System", "Microsoft-Windows-MemoryDiagnostics-Results", new[] { 1101, 1102, 1201, 1202 }, Memory, "Result of the Windows Memory Diagnostic"),
+        new("System", "Microsoft-Windows-Resource-Exhaustion-Detector", new[] { 2004 }, Memory, "Virtual memory almost exhausted"),
 
-        new("System", "Service Control Manager", new[] { 7000, 7001, 7031, 7034 }, DriverServizi, "Service failed to start or stopped unexpectedly"),
-        new("System", "Microsoft-Windows-Kernel-PnP", new[] { 219 }, DriverServizi, "Driver not loaded for a device"),
+        new("System", "Service Control Manager", new[] { 7000, 7001, 7031, 7034 }, DriverServices, "Service failed to start or stopped unexpectedly"),
+        new("System", "Microsoft-Windows-Kernel-PnP", new[] { 219 }, DriverServices, "Driver not loaded for a device"),
 
-        new("System", "Microsoft-Windows-WindowsUpdateClient", new[] { 19 }, Cambiamenti, "Update installed"),
-        new("System", "Microsoft-Windows-WindowsUpdateClient", new[] { 20 }, Cambiamenti, "An update failed to install"),
+        new("System", "Microsoft-Windows-WindowsUpdateClient", new[] { 19 }, Changes, "Update installed"),
+        new("System", "Microsoft-Windows-WindowsUpdateClient", new[] { 20 }, Changes, "An update failed to install"),
 
-        new("Application", "Application Error", new[] { 1000 }, Applicazioni, "A program closed because of an error"),
-        new("Application", "Application Hang", new[] { 1002 }, Applicazioni, "A program stopped responding"),
+        new("Application", "Application Error", new[] { 1000 }, Applications, "A program closed because of an error"),
+        new("Application", "Application Hang", new[] { 1002 }, Applications, "A program stopped responding"),
     };
 
     /// <summary>Events of the last given days, most recent first.</summary>

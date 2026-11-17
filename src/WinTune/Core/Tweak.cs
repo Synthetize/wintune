@@ -92,7 +92,7 @@ public sealed class ToggleTweak : Tweak
     public override void WriteValue(string value) => Write(IsTrue(value));
 
     public override string DisplayValue(string? value) =>
-        value is null ? "sconosciuto" : IsTrue(value) ? OnText : OffText;
+        value is null ? "unknown" : IsTrue(value) ? OnText : OffText;
 }
 
 /// <summary>Optimization with a list of possible values.</summary>
@@ -112,7 +112,7 @@ public sealed class ChoiceTweak : Tweak
     {
         if (value is null)
         {
-            return "sconosciuto";
+            return "unknown";
         }
 
         try

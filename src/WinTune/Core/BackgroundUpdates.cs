@@ -9,7 +9,7 @@ using Microsoft.Win32;
 
 namespace WinTune.Core;
 
-/// <summary>Notification settings and memory, in %AppData%\WinTune\notifiche.json.</summary>
+/// <summary>Notification settings and memory, in %AppData%\WinTune\notifications.json.</summary>
 public sealed class UpdateNotifySettings
 {
     /// <summary>How many hours between update checks.</summary>
@@ -37,7 +37,7 @@ public static class BackgroundUpdates
 
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
 
-    private static string SettingsPath => Path.Combine(ProfileService.DataFolder, "notifiche.json");
+    private static string SettingsPath => Path.Combine(ProfileService.DataFolder, "notifications.json");
 
     private static string ExePath => Environment.ProcessPath
         ?? throw new InvalidOperationException("The path of WinTune.exe is not available.");
@@ -264,7 +264,7 @@ public static class BackgroundUpdates
         {
             Directory.CreateDirectory(ProfileService.DataFolder);
             File.AppendAllText(
-                Path.Combine(ProfileService.DataFolder, "errori.log"),
+                Path.Combine(ProfileService.DataFolder, "errors.log"),
                 $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n{message}\n\n");
         }
         catch (Exception)

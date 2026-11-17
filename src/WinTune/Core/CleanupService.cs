@@ -13,10 +13,10 @@ public sealed record CleanupTarget(string Id, string Name, string Description);
 /// <summary>Disk cleanup: temporary files, Windows Update cache, recycle bin.</summary>
 public static class CleanupService
 {
-    public const string UserTemp = "tempUtente";
+    public const string UserTemp = "userTemp";
     public const string WindowsTemp = "tempWindows";
     public const string UpdateCache = "cacheUpdate";
-    public const string RecycleBin = "cestino";
+    public const string RecycleBin = "recycleBin";
 
     public static IReadOnlyList<CleanupTarget> Targets { get; } = new[]
     {

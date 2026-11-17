@@ -46,9 +46,9 @@ internal static class WinUtilExtras
             NeedsRestart = true,
             GetOptions = () => new List<ChoiceOption>
             {
-                new("attivo", "Enabled (default)"),
-                new("compatibilita", "Disabled (compatibility)"),
-                new("disattivato", "Fully disabled"),
+                new("enabled", "Enabled (default)"),
+                new("compatibility", "Disabled (compatibility)"),
+                new("disabled", "Fully disabled"),
             },
             Read = ReadMultiplaneOverlay,
             Write = WriteMultiplaneOverlay,
@@ -57,7 +57,7 @@ internal static class WinUtilExtras
         // ---------- Privacy and telemetry ----------
         new ToggleTweak
         {
-            Id = "privacy.ricercaStore",
+            Id = "privacy.storeSearch",
             Category = TweakCatalog.Privacy,
             Title = "Recommended results in Microsoft Store search",
             Description = "Suggested apps and content that appear as you type in the Microsoft Store search.",
@@ -71,8 +71,8 @@ internal static class WinUtilExtras
         // ---------- File Explorer ----------
         new ToggleTweak
         {
-            Id = "esplora.tipoCartellaAutomatico",
-            Category = TweakCatalog.EsploraFile,
+            Id = "explorer.automaticFolderType",
+            Category = TweakCatalog.FileExplorer,
             Title = "Automatic folder type discovery",
             Description = "File Explorer picks the view (pictures, music, documents) by looking at the content: in large folders this slows down opening. When disabled, all folders use the generic view and grouping is not available.",
             OnText = "Enabled",
@@ -99,8 +99,8 @@ internal static class WinUtilExtras
         // ---------- System ----------
         new ToggleTweak
         {
-            Id = "sistema.bitlocker",
-            Category = TweakCatalog.Sistema,
+            Id = "system.bitlocker",
+            Category = TweakCatalog.SystemCategory,
             Title = "System drive encryption (BitLocker)",
             Description = "BitLocker, or \"Device encryption\" on Windows Home. When you turn it off, Windows decrypts the drive in the background: it can take from a few minutes to a few hours and the PC stays usable. Without encryption, anyone who gets hold of the drive can read its data.",
             IsPresent = () => BitLockerService.IsSupported,
@@ -122,8 +122,8 @@ internal static class WinUtilExtras
         },
         new ToggleTweak
         {
-            Id = "sistema.softwareLogitech",
-            Category = TweakCatalog.Sistema,
+            Id = "system.logitechSoftware",
+            Category = TweakCatalog.SystemCategory,
             Title = "Logitech Download Assistant",
             Description = "The program that Windows Update reinstalls along with Logitech drivers and that offers to download the manufacturer software. The devices work without it too.",
             OnText = "Allowed",
@@ -165,12 +165,12 @@ internal static class WinUtilExtras
     {
         bool testMode = RegistryUtil.GetDword(RegistryHive.LocalMachine, DwmKey, "OverlayTestMode") == 5;
         bool disabled = RegistryUtil.GetDword(RegistryHive.LocalMachine, GraphicsDriversKey, "DisableOverlays") == 1;
-        return testMode && disabled ? "disattivato" : testMode ? "compatibilita" : "attivo";
+        return testMode && disabled ? "disabled" : testMode ? "compatibility" : "enabled";
     }
 
     private static void WriteMultiplaneOverlay(string value)
     {
-        if (value == "attivo")
+        if (value == "enabled")
         {
             RegistryUtil.DeleteValue(RegistryHive.LocalMachine, DwmKey, "OverlayTestMode");
         }
@@ -179,7 +179,7 @@ internal static class WinUtilExtras
             RegistryUtil.SetDword(RegistryHive.LocalMachine, DwmKey, "OverlayTestMode", 5);
         }
 
-        if (value == "disattivato")
+        if (value == "disabled")
         {
             RegistryUtil.SetDword(RegistryHive.LocalMachine, GraphicsDriversKey, "DisableOverlays", 1);
         }

@@ -445,7 +445,7 @@ public partial class AppPage : Page
         }
 
         bool confirmed = await Dialogs.ConfirmAsync(
-            "Togliere " + targets.Count + " apps from the list?",
+            "Remove " + targets.Count + " apps from the list?",
             ListNames(targets) + "\n\nThey are not uninstalled from the PC.",
             "Remove");
 
@@ -1324,7 +1324,7 @@ public partial class AppPage : Page
 
             foreach (BloatRowViewModel row in targets)
             {
-                TweakEngine.LogChange("appPreinstallata." + row.Package, "present", "removal requested");
+                TweakEngine.LogChange("preinstalledApp." + row.Package, "present", "removal requested");
             }
 
             await LoadBloatAsync();

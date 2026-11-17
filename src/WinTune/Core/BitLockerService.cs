@@ -76,7 +76,7 @@ internal static class BitLockerService
         try
         {
             ProcessResult result = ProcessRunner
-                .RunPowerShellAsync("$v = Get-BitLockerVolume -MountPoint $env:SystemDrive; Write-Output ('STATO=' + $v.VolumeStatus)", 30000)
+                .RunPowerShellAsync("$v = Get-BitLockerVolume -MountPoint $env:SystemDrive; Write-Output ('STATE=' + $v.VolumeStatus)", 30000)
                 .GetAwaiter()
                 .GetResult();
 
@@ -84,9 +84,9 @@ internal static class BitLockerService
             foreach (string line in result.Output.Split('\n'))
             {
                 string trimmed = line.Trim();
-                if (trimmed.StartsWith("STATO=", StringComparison.Ordinal))
+                if (trimmed.StartsWith("STATE=", StringComparison.Ordinal))
                 {
-                    status = trimmed.Substring("STATO=".Length);
+                    status = trimmed.Substring("STATE=".Length);
                 }
             }
 

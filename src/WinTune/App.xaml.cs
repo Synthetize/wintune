@@ -165,14 +165,14 @@ public partial class App : Application
         thread.Start();
     }
 
-    // An unexpected error must not close the program: it shows it and writes it to errori.log.
+    // An unexpected error must not close the program: it shows it and writes it to errors.log.
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
         try
         {
             Directory.CreateDirectory(ProfileService.DataFolder);
             File.AppendAllText(
-                Path.Combine(ProfileService.DataFolder, "errori.log"),
+                Path.Combine(ProfileService.DataFolder, "errors.log"),
                 $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n{e.Exception}\n\n");
         }
         catch

@@ -92,7 +92,7 @@ public static class DisplayService
             throw new InvalidOperationException("Windows rejected the requested refresh rate (code " + result + ").");
         }
 
-        TweakEngine.LogChange("schermo.frequenza", before + " Hz", hertz + " Hz");
+        TweakEngine.LogChange("display.frequency", before + " Hz", hertz + " Hz");
     }
 
     private static NativeMethods.DEVMODE NewDevMode()

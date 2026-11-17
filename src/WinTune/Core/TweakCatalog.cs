@@ -16,32 +16,32 @@ public static class TweakCatalog
 {
     public const string Gaming = "Gaming & performance";
     public const string Privacy = "Privacy & telemetry";
-    public const string EsploraFile = "File Explorer";
-    public const string Barra = "Taskbar & Start";
-    public const string Aspetto = "Appearance & accessibility";
-    public const string Energia = "Power";
-    public const string Sistema = "System";
-    public const string Rete = "Network";
+    public const string FileExplorer = "File Explorer";
+    public const string Taskbar = "Taskbar & Start";
+    public const string Appearance = "Appearance & accessibility";
+    public const string Power = "Power";
+    public const string SystemCategory = "System";
+    public const string Network = "Network";
     public const string Browser = "Browser";
-    public const string ServiziPrudenti = "Services: safe list";
-    public const string ServiziAggressivi = "Services: aggressive list";
+    public const string ServicesSafe = "Services: safe list";
+    public const string ServicesAggressive = "Services: aggressive list";
     public const string Driver = "Drivers";
-    public const string Aggiornamenti = "Updates";
+    public const string Updates = "Updates";
 
     /// <summary>Order in which the categories appear on the Optimizations page.</summary>
     public static IReadOnlyList<string> CategoryOrder { get; } = new[]
     {
         Gaming,
         Privacy,
-        EsploraFile,
-        Barra,
-        Aspetto,
-        Energia,
-        Sistema,
-        Rete,
+        FileExplorer,
+        Taskbar,
+        Appearance,
+        Power,
+        SystemCategory,
+        Network,
         Browser,
-        ServiziPrudenti,
-        ServiziAggressivi,
+        ServicesSafe,
+        ServicesAggressive,
     };
 
     private const string MouseKey = @"Control Panel\Mouse";
@@ -99,7 +99,7 @@ public static class TweakCatalog
     private static IReadOnlyList<Tweak> BuildAll()
     {
         var all = new List<Tweak>(Build());
-        int services = all.FindIndex(t => t.Category == ServiziPrudenti);
+        int services = all.FindIndex(t => t.Category == ServicesSafe);
         int index = services < 0 ? all.Count : services;
 
         List<Tweak> imported = WinUtilTweaks.Build();
@@ -113,7 +113,7 @@ public static class TweakCatalog
         // ---------- Mouse (shown among the gaming entries) ----------
         new ToggleTweak
         {
-            Id = "mouse.accelerazione",
+            Id = "mouse.acceleration",
             Category = Gaming,
             Title = "Mouse acceleration",
             Description = "This is the Windows \"Enhance pointer precision\" setting. When disabled, the pointer movement is always proportional.",
@@ -125,8 +125,8 @@ public static class TweakCatalog
         // ---------- Power ----------
         new ToggleTweak
         {
-            Id = "energia.ibernazione",
-            Category = Energia,
+            Id = "power.hibernation",
+            Category = Power,
             Title = "Hibernation",
             Description = "Turning it off also disables fast startup and frees the space used by the hiberfil.sys file.",
             Recommended = "false",
@@ -135,8 +135,8 @@ public static class TweakCatalog
         },
         new ChoiceTweak
         {
-            Id = "energia.schermo",
-            Category = Energia,
+            Id = "power.display",
+            Category = Power,
             Title = "Turn off the screen",
             Description = "Idle time before the screen turns off (when plugged in).",
             GetOptions = () => MinuteOptions(MonitorMinutes, PowerUtil.ReadAcMinutes(PowerUtil.VideoSubgroup, PowerUtil.VideoIdleTimeout)),
@@ -145,8 +145,8 @@ public static class TweakCatalog
         },
         new ChoiceTweak
         {
-            Id = "energia.sospensione",
-            Category = Energia,
+            Id = "power.sleep",
+            Category = Power,
             Title = "Sleep",
             Description = "Idle time before the PC goes to sleep (when plugged in).",
             GetOptions = () => MinuteOptions(StandbyMinutes, PowerUtil.ReadAcMinutes(PowerUtil.SleepSubgroup, PowerUtil.StandbyIdleTimeout)),
@@ -155,8 +155,8 @@ public static class TweakCatalog
         },
         new ChoiceTweak
         {
-            Id = "energia.piano",
-            Category = Energia,
+            Id = "power.plan",
+            Category = Power,
             Title = "Power plan",
             Description = "Choose among the plans available on this PC.",
             GetOptions = () => PowerUtil.ListPlans().Select(p => new ChoiceOption(p.Guid, p.Name)).ToList(),
@@ -165,8 +165,8 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "energia.prestazioniEccellenti",
-            Category = Energia,
+            Id = "power.ultimatePerformance",
+            Category = Power,
             Title = "Ultimate Performance plan",
             Description = "Creates and activates the hidden \"Ultimate Performance\" power plan: no CPU power saving, so more heat and consumption. Turning it off goes back to Balanced and deletes the plan. Not meant for laptops on battery.",
             OnText = "Active",
@@ -186,8 +186,8 @@ public static class TweakCatalog
         },
         new ChoiceTweak
         {
-            Id = "rete.dns",
-            Category = Rete,
+            Id = "network.dns",
+            Category = Network,
             Title = "DNS servers",
             Description = "Name servers used by your active network adapters (IPv4). \"Automatic\" uses the ones from your router or provider. Changing it can speed up or slow down name lookups; it does not change your Internet speed.",
             GetOptions = () => DnsService.Options(DnsService.Read()),
@@ -198,8 +198,8 @@ public static class TweakCatalog
         // ---------- File Explorer ----------
         new ToggleTweak
         {
-            Id = "esplora.estensioni",
-            Category = EsploraFile,
+            Id = "explorer.extensions",
+            Category = FileExplorer,
             Title = "File extensions",
             Description = "Shows the extension (.txt, .exe...) next to the file name.",
             OnText = "Shown",
@@ -210,8 +210,8 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "esplora.nascosti",
-            Category = EsploraFile,
+            Id = "explorer.hidden",
+            Category = FileExplorer,
             Title = "Hidden files and folders",
             Description = "Also shows files and folders marked as hidden.",
             OnText = "Shown",
@@ -221,8 +221,8 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "esplora.questoPc",
-            Category = EsploraFile,
+            Id = "explorer.thisPc",
+            Category = FileExplorer,
             Title = "Open File Explorer on \"This PC\"",
             Description = "Instead of the home page with recent files.",
             OnText = "Yes",
@@ -232,8 +232,8 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "esplora.menuClassico",
-            Category = EsploraFile,
+            Id = "explorer.classicMenu",
+            Category = FileExplorer,
             Title = "Classic context menu",
             Description = "Right-click opens the full menu straight away, without \"Show more options\".",
             OnText = "Enabled",
@@ -271,7 +271,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "gaming.pianificazioneGpu",
+            Id = "gaming.gpuScheduling",
             Category = Gaming,
             Title = "Hardware-accelerated GPU scheduling",
             Description = "Windows graphics setting. Takes effect after the next restart.",
@@ -283,7 +283,7 @@ public static class TweakCatalog
         // ---------- Privacy and telemetry ----------
         new ToggleTweak
         {
-            Id = "privacy.telemetriaMinima",
+            Id = "privacy.minimalTelemetry",
             Category = Privacy,
             Title = "Minimum telemetry",
             Description = "Limits the diagnostic data sent to Microsoft to the minimum allowed by your Windows edition.",
@@ -303,7 +303,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.idPubblicita",
+            Id = "privacy.advertisingId",
             Category = Privacy,
             Title = "Advertising ID",
             Description = "Identifier that apps use to show you personalized ads.",
@@ -315,7 +315,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.suggerimenti",
+            Id = "privacy.suggestions",
             Category = Privacy,
             Title = "Suggestions and recommended apps",
             Description = "Tips in the Start menu and in Settings, and apps suggested or installed by Windows.",
@@ -333,7 +333,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.ricercaWeb",
+            Id = "privacy.webSearch",
             Category = Privacy,
             Title = "Web search in the Start menu",
             Description = "Bing results mixed with files and programs when you search from the Start menu.",
@@ -357,7 +357,7 @@ public static class TweakCatalog
         new ToggleTweak
         {
             Id = "privacy.widget",
-            Category = Barra,
+            Category = Taskbar,
             Title = "Widget",
             Description = "News and weather panel on the taskbar, with its background processes.",
             OnText = "Enabled",
@@ -379,7 +379,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.cronologiaAttivita",
+            Id = "privacy.activityHistory",
             Category = Privacy,
             Title = "Activity history",
             Description = "Collects the activities done on the PC and sends them to Microsoft.",
@@ -402,7 +402,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.esperienzePersonalizzate",
+            Id = "privacy.personalizedExperiences",
             Category = Privacy,
             Title = "Tailored experiences",
             Description = "Microsoft uses diagnostic data for tailored tips, suggestions and ads.",
@@ -414,7 +414,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.richiesteFeedback",
+            Id = "privacy.feedbackPrompts",
             Category = Privacy,
             Title = "Feedback requests",
             Description = "Windows occasionally asks for your opinion on the system.",
@@ -436,7 +436,7 @@ public static class TweakCatalog
         },
         new ToggleTweak
         {
-            Id = "privacy.pubblicitaEsplora",
+            Id = "privacy.explorerAds",
             Category = Privacy,
             Title = "Ads in File Explorer",
             Description = "Promotional notices (for example from OneDrive) inside File Explorer.",
@@ -448,7 +448,7 @@ public static class TweakCatalog
         // ---------- Drivers and updates: managed by their pages, here only for the profile ----------
         new ToggleTweak
         {
-            Id = "driver.automatici",
+            Id = "driver.automatic",
             Category = Driver,
             Title = "Automatic drivers from Windows Update",
             OnText = "Enabled",
@@ -469,8 +469,8 @@ public static class TweakCatalog
         },
         new ChoiceTweak
         {
-            Id = "aggiornamenti.modalita",
-            Category = Aggiornamenti,
+            Id = "updates.mode",
+            Category = Updates,
             Title = "Windows Update mode",
             Hidden = true,
             GetOptions = UpdateModeOptions,
@@ -479,22 +479,22 @@ public static class TweakCatalog
         },
 
         // ---------- Services: safe list ----------
-        Service(ServiziPrudenti, "DiagTrack", "Telemetry (DiagTrack)", "Connected User Experiences and Telemetry: collects and sends diagnostic data.", "auto", true),
-        Service(ServiziPrudenti, "dmwappushservice", "WAP Push message routing", "Used almost only for telemetry.", "demand", true),
-        Service(ServiziPrudenti, "MapsBroker", "Downloaded maps manager", "Only needed by the Maps app with offline maps.", "delayed-auto", true),
-        Service(ServiziPrudenti, "Fax", "Fax", "Sending and receiving faxes.", "demand", true),
-        Service(ServiziPrudenti, "RetailDemo", "Retail demo", "Demo mode for display PCs in shops.", "demand", true),
-        Service(ServiziPrudenti, "RemoteRegistry", "Remote Registry", "Allows the registry to be modified from another computer on the network.", "disabled", true),
-        Service(ServiziPrudenti, "AJRouter", "AllJoyn Router", "Communication with AllJoyn IoT devices, now rarely used.", "demand", true),
-        Service(ServiziPrudenti, "WMPNetworkSvc", "Windows Media Player network sharing", "Shares media libraries with other devices.", "demand", true),
-        Service(ServiziPrudenti, "WpcMonSvc", "Parental controls", "Only needed if you use Microsoft Family parental controls.", "demand", true),
-        Service(ServiziPrudenti, "wisvc", "Windows Insider Program", "Only needed if you receive Windows preview builds.", "demand", true),
-        Service(ServiziPrudenti, "CscService", "Offline Files", "Local copies of network files, used almost only on company networks.", "demand", true),
+        Service(ServicesSafe, "DiagTrack", "Telemetry (DiagTrack)", "Connected User Experiences and Telemetry: collects and sends diagnostic data.", "auto", true),
+        Service(ServicesSafe, "dmwappushservice", "WAP Push message routing", "Used almost only for telemetry.", "demand", true),
+        Service(ServicesSafe, "MapsBroker", "Downloaded maps manager", "Only needed by the Maps app with offline maps.", "delayed-auto", true),
+        Service(ServicesSafe, "Fax", "Fax", "Sending and receiving faxes.", "demand", true),
+        Service(ServicesSafe, "RetailDemo", "Retail demo", "Demo mode for display PCs in shops.", "demand", true),
+        Service(ServicesSafe, "RemoteRegistry", "Remote Registry", "Allows the registry to be modified from another computer on the network.", "disabled", true),
+        Service(ServicesSafe, "AJRouter", "AllJoyn Router", "Communication with AllJoyn IoT devices, now rarely used.", "demand", true),
+        Service(ServicesSafe, "WMPNetworkSvc", "Windows Media Player network sharing", "Shares media libraries with other devices.", "demand", true),
+        Service(ServicesSafe, "WpcMonSvc", "Parental controls", "Only needed if you use Microsoft Family parental controls.", "demand", true),
+        Service(ServicesSafe, "wisvc", "Windows Insider Program", "Only needed if you receive Windows preview builds.", "demand", true),
+        Service(ServicesSafe, "CscService", "Offline Files", "Local copies of network files, used almost only on company networks.", "demand", true),
         new ToggleTweak
         {
             // The only service that is not turned off but set to "manual", as the Chris Titus Tech Windows Utility does.
-            Id = "servizi.StorSvc.avvioAutomatico",
-            Category = ServiziPrudenti,
+            Id = "services.StorSvc.autoStart",
+            Category = ServicesSafe,
             Title = "Storage service: automatic start",
             Description = "Manages storage settings and installations from the Microsoft Store. When disabled, the service does not start by itself at boot but only when needed: it is not turned off.",
             OnText = "Enabled",
@@ -507,58 +507,58 @@ public static class TweakCatalog
         },
 
         // ---------- Services: aggressive list ----------
-        Service(ServiziAggressivi, "SysMain", "SysMain (Superfetch)", "Preloads frequently used programs into memory. On an SSD the benefit is minimal.", "auto", false),
-        Service(ServiziAggressivi, "WSearch", "Windows Search indexing", "Without it, file search is much slower.", "delayed-auto", false),
-        Service(ServiziAggressivi, "WerSvc", "Windows Error Reporting", "Sends crash reports to Microsoft. Without it, some crash details are not recorded.", "demand", false),
-        Service(ServiziAggressivi, "Spooler", "Print spooler", "Turn off only if you use no printers, not even print to PDF.", "auto", false),
-        Service(ServiziAggressivi, "bthserv", "Bluetooth support", "Turn off only if you use no Bluetooth devices.", "demand", false),
-        Service(ServiziAggressivi, "lfsvc", "Geolocation", "PC location for apps and weather.", "demand", false),
-        Service(ServiziAggressivi, "PcaSvc", "Program Compatibility Assistant", "Reports compatibility problems with old programs.", "auto", false),
-        Service(ServiziAggressivi, "TrkWks", "Distributed Link Tracking", "Keeps shortcuts valid for files moved between NTFS drives.", "auto", false),
-        Service(ServiziAggressivi, "WbioSrvc", "Biometric service", "Turn off only if you do not use fingerprint or face recognition (Windows Hello).", "demand", false),
-        Service(ServiziAggressivi, "SCardSvr", "Smart card", "Turn off only if you use no smart card readers (ID cards, digital signature).", "demand", false),
-        Service(ServiziAggressivi, "PhoneSvc", "Phone service", "Used by Phone Link.", "demand", false),
-        Service(ServiziAggressivi, "XblAuthManager", "Xbox Live: authentication", "Needed by the Xbox app, Game Pass and Microsoft Store games.", "demand", false),
-        Service(ServiziAggressivi, "XblGameSave", "Xbox Live: game saves", "Syncs saves of Xbox and Game Pass games.", "demand", false),
-        Service(ServiziAggressivi, "XboxNetApiSvc", "Xbox Live: networking", "Multiplayer for Xbox and Game Pass games.", "demand", false),
-        Service(ServiziAggressivi, "XboxGipSvc", "Xbox: accessories", "Management of Xbox controllers and accessories.", "demand", false),
-        Service(ServiziAggressivi, "SharedAccess", "Internet Connection Sharing", "Needed by the Windows mobile hotspot and the network of some virtual machines.", "demand", false),
+        Service(ServicesAggressive, "SysMain", "SysMain (Superfetch)", "Preloads frequently used programs into memory. On an SSD the benefit is minimal.", "auto", false),
+        Service(ServicesAggressive, "WSearch", "Windows Search indexing", "Without it, file search is much slower.", "delayed-auto", false),
+        Service(ServicesAggressive, "WerSvc", "Windows Error Reporting", "Sends crash reports to Microsoft. Without it, some crash details are not recorded.", "demand", false),
+        Service(ServicesAggressive, "Spooler", "Print spooler", "Turn off only if you use no printers, not even print to PDF.", "auto", false),
+        Service(ServicesAggressive, "bthserv", "Bluetooth support", "Turn off only if you use no Bluetooth devices.", "demand", false),
+        Service(ServicesAggressive, "lfsvc", "Geolocation", "PC location for apps and weather.", "demand", false),
+        Service(ServicesAggressive, "PcaSvc", "Program Compatibility Assistant", "Reports compatibility problems with old programs.", "auto", false),
+        Service(ServicesAggressive, "TrkWks", "Distributed Link Tracking", "Keeps shortcuts valid for files moved between NTFS drives.", "auto", false),
+        Service(ServicesAggressive, "WbioSrvc", "Biometric service", "Turn off only if you do not use fingerprint or face recognition (Windows Hello).", "demand", false),
+        Service(ServicesAggressive, "SCardSvr", "Smart card", "Turn off only if you use no smart card readers (ID cards, digital signature).", "demand", false),
+        Service(ServicesAggressive, "PhoneSvc", "Phone service", "Used by Phone Link.", "demand", false),
+        Service(ServicesAggressive, "XblAuthManager", "Xbox Live: authentication", "Needed by the Xbox app, Game Pass and Microsoft Store games.", "demand", false),
+        Service(ServicesAggressive, "XblGameSave", "Xbox Live: game saves", "Syncs saves of Xbox and Game Pass games.", "demand", false),
+        Service(ServicesAggressive, "XboxNetApiSvc", "Xbox Live: networking", "Multiplayer for Xbox and Game Pass games.", "demand", false),
+        Service(ServicesAggressive, "XboxGipSvc", "Xbox: accessories", "Management of Xbox controllers and accessories.", "demand", false),
+        Service(ServicesAggressive, "SharedAccess", "Internet Connection Sharing", "Needed by the Windows mobile hotspot and the network of some virtual machines.", "demand", false),
     };
 
     // ---------- Drivers and updates (dedicated pages) ----------
 
     private static IReadOnlyList<ChoiceOption> UpdateModeOptions() => new List<ChoiceOption>
     {
-        new("attivi", "Enabled"),
-        new("soloNotifica", "Notify only"),
-        new("inPausa", "Paused"),
-        new("disattivati", "Disabled"),
+        new("enabled", "Enabled"),
+        new("notifyOnly", "Notify only"),
+        new("paused", "Paused"),
+        new("disabled", "Disabled"),
     };
 
     private static string ReadUpdateMode() => WindowsUpdateService.CurrentMode switch
     {
-        UpdateMode.SoloNotifica => "soloNotifica",
-        UpdateMode.InPausa => "inPausa",
-        UpdateMode.Disattivati => "disattivati",
-        _ => "attivi",
+        UpdateMode.NotifyOnly => "notifyOnly",
+        UpdateMode.Paused => "paused",
+        UpdateMode.Disabled => "disabled",
+        _ => "enabled",
     };
 
     private static void WriteUpdateMode(string value)
     {
         switch (value)
         {
-            case "soloNotifica":
-                WindowsUpdateService.Apply(UpdateMode.SoloNotifica, null);
+            case "notifyOnly":
+                WindowsUpdateService.Apply(UpdateMode.NotifyOnly, null);
                 break;
-            case "inPausa":
+            case "paused":
                 // The profile does not carry a date: the standard Windows pause is used, 35 days.
-                WindowsUpdateService.Apply(UpdateMode.InPausa, DateTime.Now.AddDays(35));
+                WindowsUpdateService.Apply(UpdateMode.Paused, DateTime.Now.AddDays(35));
                 break;
-            case "disattivati":
-                WindowsUpdateService.Apply(UpdateMode.Disattivati, null);
+            case "disabled":
+                WindowsUpdateService.Apply(UpdateMode.Disabled, null);
                 break;
             default:
-                WindowsUpdateService.Apply(UpdateMode.Attivi, null);
+                WindowsUpdateService.Apply(UpdateMode.Enabled, null);
                 break;
         }
     }
@@ -571,7 +571,7 @@ public static class TweakCatalog
     private static ToggleTweak Service(string category, string serviceName, string title, string description, string defaultStart, bool recommendOff) =>
         new()
         {
-            Id = "servizi." + serviceName,
+            Id = "services." + serviceName,
             Category = category,
             Title = title,
             Description = description,

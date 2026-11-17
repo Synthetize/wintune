@@ -29,15 +29,15 @@ public static class SystemChecks
     private const string Script =
         "$r = [ordered]@{}; " +
         "try { $r.ram = @(Get-CimInstance Win32_PhysicalMemory | ForEach-Object { [ordered]@{ " +
-        "tipo = [int]$_.SMBIOSMemoryType; velocita = [int]$_.Speed; configurata = [int]$_.ConfiguredClockSpeed; " +
-        "tensione = [int]$_.ConfiguredVoltage; codice = ([string]$_.PartNumber).Trim(); capacita = [long]$_.Capacity } }) } catch { $r.ram = @() }; " +
+        "type = [int]$_.SMBIOSMemoryType; speed = [int]$_.Speed; configured = [int]$_.ConfiguredClockSpeed; " +
+        "voltage = [int]$_.ConfiguredVoltage; code = ([string]$_.PartNumber).Trim(); capacity = [long]$_.Capacity } }) } catch { $r.ram = @() }; " +
         "try { $r.secureBoot = [bool](Confirm-SecureBootUEFI) } catch { $r.secureBoot = $null }; " +
-        "try { $t = Get-Tpm; $r.tpmPresente = [bool]$t.TpmPresent; $r.tpmPronto = [bool]$t.TpmReady } catch { $r.tpmPresente = $null; $r.tpmPronto = $null }; " +
+        "try { $t = Get-Tpm; $r.tpmPresent = [bool]$t.TpmPresent; $r.tpmReady = [bool]$t.TpmReady } catch { $r.tpmPresent = $null; $r.tpmReady = $null }; " +
         "try { $l = Get-CimInstance SoftwareLicensingProduct -Filter \"ApplicationID='55c92734-d682-4d71-983e-d6ec3f16059f' AND PartialProductKey IS NOT NULL\" | Select-Object -First 1; " +
-        "$r.licenza = if ($l) { [int]$l.LicenseStatus } else { -1 } } catch { $r.licenza = $null }; " +
+        "$r.license = if ($l) { [int]$l.LicenseStatus } else { -1 } } catch { $r.license = $null }; " +
         "try { $r.trim = (& fsutil.exe behavior query DisableDeleteNotify | Out-String) } catch { $r.trim = $null }; " +
-        "try { $r.dischi = @(Get-PhysicalDisk | ForEach-Object { [ordered]@{ nome = [string]$_.FriendlyName; tipo = [string]$_.MediaType; " +
-        "salute = [string]$_.HealthStatus; dimensione = [long]$_.Size } }) } catch { $r.dischi = @() }; " +
+        "try { $r.disks = @(Get-PhysicalDisk | ForEach-Object { [ordered]@{ name = [string]$_.FriendlyName; type = [string]$_.MediaType; " +
+        "health = [string]$_.HealthStatus; size = [long]$_.Size } }) } catch { $r.disks = @() }; " +
         "$r | ConvertTo-Json -Depth 4 -Compress";
 
     /// <summary>Runs all the checks. The ones that fail appear as "not determinable".</summary>
@@ -88,12 +88,12 @@ public static class SystemChecks
             return Unknown(title);
         }
 
-        int type = parsed.Max(m => ReadInt(m["tipo"]));
-        int configured = parsed.Max(m => ReadInt(m["configurata"]));
-        int rated = parsed.Max(m => ReadInt(m["velocita"]));
-        int voltage = parsed.Max(m => ReadInt(m["tensione"]));
-        long totalBytes = parsed.Sum(m => ReadLong(m["capacita"]));
-        string partNumber = parsed.Select(m => ReadString(m["codice"])).FirstOrDefault(c => c.Length > 0) ?? "";
+        int type = parsed.Max(m => ReadInt(m["type"]));
+        int configured = parsed.Max(m => ReadInt(m["configured"]));
+        int rated = parsed.Max(m => ReadInt(m["speed"]));
+        int voltage = parsed.Max(m => ReadInt(m["voltage"]));
+        long totalBytes = parsed.Sum(m => ReadLong(m["capacity"]));
+        string partNumber = parsed.Select(m => ReadString(m["code"])).FirstOrDefault(c => c.Length > 0) ?? "";
 
         // 26 = DDR4, 34 = DDR5. Standard (JEDEC) speed and voltage, the highest common for each type.
         string typeName;
@@ -175,7 +175,7 @@ public static class SystemChecks
     {
         const string title = "Windows activation";
 
-        if (data is null || data["licenza"] is not JsonNode node)
+        if (data is null || data["license"] is not JsonNode node)
         {
             return Unknown(title);
         }
@@ -198,8 +198,8 @@ public static class SystemChecks
         }
 
         bool? secureBoot = ReadBool(data["secureBoot"]);
-        bool? tpmPresent = ReadBool(data["tpmPresente"]);
-        bool? tpmReady = ReadBool(data["tpmPronto"]);
+        bool? tpmPresent = ReadBool(data["tpmPresent"]);
+        bool? tpmReady = ReadBool(data["tpmReady"]);
 
         string secureText = secureBoot switch
         {
@@ -255,7 +255,7 @@ public static class SystemChecks
     {
         const string title = "Disk health";
 
-        if (data?["dischi"] is not JsonArray disks || disks.Count == 0)
+        if (data?["disks"] is not JsonArray disks || disks.Count == 0)
         {
             return Unknown(title);
         }
@@ -265,9 +265,9 @@ public static class SystemChecks
 
         foreach (JsonObject disk in disks.OfType<JsonObject>())
         {
-            string name = ReadString(disk["nome"]);
-            string health = ReadString(disk["salute"]);
-            long size = ReadLong(disk["dimensione"]);
+            string name = ReadString(disk["name"]);
+            string health = ReadString(disk["health"]);
+            long size = ReadLong(disk["size"]);
 
             bool healthy = string.Equals(health, "Healthy", StringComparison.OrdinalIgnoreCase);
             allHealthy &= healthy;

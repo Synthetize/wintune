@@ -5,9 +5,9 @@ namespace WinTune.Core;
 
 public enum ShutdownAction
 {
-    Spegni = 0,
-    Riavvia = 1,
-    Sospendi = 2,
+    Shutdown = 0,
+    Restart = 1,
+    Sleep = 2,
 }
 
 /// <summary>
@@ -36,7 +36,7 @@ public static class ShutdownService
 
         int seconds = minutes * 60;
 
-        if (action == ShutdownAction.Sospendi)
+        if (action == ShutdownAction.Sleep)
         {
             _suspendTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(seconds) };
             _suspendTimer.Tick += OnSuspendTimerTick;
@@ -44,7 +44,7 @@ public static class ShutdownService
         }
         else
         {
-            string mode = action == ShutdownAction.Riavvia ? "/r" : "/s";
+            string mode = action == ShutdownAction.Restart ? "/r" : "/s";
             ProcessRunner.RunOrThrow(ShutdownExe, mode + " /t " + seconds);
         }
 

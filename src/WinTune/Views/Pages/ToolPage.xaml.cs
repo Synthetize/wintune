@@ -309,7 +309,7 @@ public partial class ToolPage : Page
             await ExternalToolService.SetAutostartAsync(tool.Status, enabled);
 
             TweakEngine.LogChange(
-                "tool." + tool.Status.Tool.Id + ".avvio",
+                "tool." + tool.Status.Tool.Id + ".startup",
                 enabled ? "disabled" : "enabled",
                 enabled ? "enabled" : "disabled");
         });
@@ -391,7 +391,7 @@ public partial class ToolPage : Page
         await RunAsync("Activating profile \"" + profile.Name + "\"...", async () =>
         {
             ExternalToolService.ActivateProfile(tool.Status, profile.FilePath);
-            TweakEngine.LogChange("tool." + tool.Status.Tool.Id + ".profilo", null, profile.Name);
+            TweakEngine.LogChange("tool." + tool.Status.Tool.Id + ".profile", null, profile.Name);
 
             ShowMessage(
                 "Profile \"" + profile.Name + "\" sent to " + tool.Name,

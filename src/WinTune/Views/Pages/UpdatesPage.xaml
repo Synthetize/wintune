@@ -1,5 +1,5 @@
 <Page
-    x:Class="WinTune.Views.Pages.AggiornamentiPage"
+    x:Class="WinTune.Views.Pages.UpdatesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -43,7 +43,7 @@
                         CornerRadius="6">
                         <StackPanel>
                             <RadioButton
-                                x:Name="ModeAttivi"
+                                x:Name="ModeEnabled"
                                 Checked="OnModeChecked"
                                 Content="Enabled"
                                 FontWeight="SemiBold"
@@ -68,7 +68,7 @@
                         CornerRadius="6">
                         <StackPanel>
                             <RadioButton
-                                x:Name="ModeNotifica"
+                                x:Name="ModeNotifyOnly"
                                 Checked="OnModeChecked"
                                 Content="Notify only"
                                 FontWeight="SemiBold"
@@ -93,7 +93,7 @@
                         CornerRadius="6">
                         <StackPanel>
                             <RadioButton
-                                x:Name="ModePausa"
+                                x:Name="ModePaused"
                                 Checked="OnModeChecked"
                                 Content="Paused"
                                 FontWeight="SemiBold"
@@ -118,7 +118,7 @@
                         CornerRadius="6">
                         <StackPanel>
                             <RadioButton
-                                x:Name="ModeDisattivati"
+                                x:Name="ModeDisabled"
                                 Checked="OnModeChecked"
                                 Content="Disabled"
                                 FontWeight="SemiBold"

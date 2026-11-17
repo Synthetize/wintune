@@ -11,15 +11,15 @@ using WinTune.ViewModels;
 
 namespace WinTune.Views.Pages;
 
-public partial class OttimizzazioniPage : Page
+public partial class OptimizationsPage : Page
 {
     private readonly List<TweakViewModel> _items = new();
     private readonly List<TweakGroup> _groups = new();
 
     // Special filter: shows only the one-time actions.
-    private const string ActionsFilter = "__azioni";
+    private const string ActionsFilter = "__actions";
 
-    public OttimizzazioniPage()
+    public OptimizationsPage()
     {
         InitializeComponent();
 
@@ -154,8 +154,8 @@ public partial class OttimizzazioniPage : Page
 
         // Privacy and services are the most invasive changes: a restore point first is advisable.
         bool invasive = pending.Any(p => p.Tweak.Category == TweakCatalog.Privacy
-            || p.Tweak.Category == TweakCatalog.ServiziPrudenti
-            || p.Tweak.Category == TweakCatalog.ServiziAggressivi);
+            || p.Tweak.Category == TweakCatalog.ServicesSafe
+            || p.Tweak.Category == TweakCatalog.ServicesAggressive);
 
         string advice = invasive
             ? "\n\nThis includes privacy and service changes: it is recommended to create a restore point first from the Utilities section."
@@ -272,8 +272,8 @@ public partial class OttimizzazioniPage : Page
             long freed = await CleanupService.CleanAsync(CleanupService.UserTemp);
             freed += await CleanupService.CleanAsync(CleanupService.WindowsTemp);
 
-            TweakEngine.LogChange("pulizia.disco", "temporary files", CleanupService.FormatSize(freed) + " freed");
-            ShowMessage("Temporary files deleted", CleanupService.FormatSize(freed) + " liberati.", Wpf.Ui.Controls.InfoBarSeverity.Success);
+            TweakEngine.LogChange("cleanup.disk", "temporary files", CleanupService.FormatSize(freed) + " freed");
+            ShowMessage("Temporary files deleted", CleanupService.FormatSize(freed) + " freed.", Wpf.Ui.Controls.InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
@@ -308,7 +308,7 @@ public partial class OttimizzazioniPage : Page
                 UseShellExecute = true,
             })?.Dispose();
 
-            TweakEngine.LogChange("pulizia.windows", null, "started");
+            TweakEngine.LogChange("cleanup.windows", null, "started");
         }
         catch (Exception ex)
         {

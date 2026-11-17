@@ -356,7 +356,7 @@ public sealed class StartupRowViewModel : ObservableObject
             try
             {
                 StartupService.SetEnabled(_entry, value);
-                TweakEngine.LogChange("avvio." + _entry.Name, _isEnabled ? "true" : "false", value ? "true" : "false");
+                TweakEngine.LogChange("startup." + _entry.Name, _isEnabled ? "true" : "false", value ? "true" : "false");
             }
             catch (Exception ex)
             {

@@ -54,7 +54,7 @@ public sealed class Profile
 /// <summary>A difference between the profile and the current state of the PC.</summary>
 public sealed record ProfileDifference(Tweak Tweak, string Expected, string Actual);
 
-/// <summary>Saves, loads and compares the profile (profilo.json).</summary>
+/// <summary>Saves, loads and compares the profile (profile.json).</summary>
 public static class ProfileService
 {
     private static readonly JsonSerializerOptions WriteOptions = new()
@@ -67,7 +67,7 @@ public static class ProfileService
     public static string DataFolder =>
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "WinTune");
 
-    public static string ProfilePath => Path.Combine(DataFolder, "profilo.json");
+    public static string ProfilePath => Path.Combine(DataFolder, "profile.json");
 
     /// <summary>Loads a profile. Null if the file does not exist; exception if it is not valid.</summary>
     public static Profile? Load(string? path = null)
@@ -85,13 +85,13 @@ public static class ProfileService
 
         var profile = new Profile();
 
-        string? name = ReadString(root["nome"]);
+        string? name = ReadString(root["name"]);
         if (!string.IsNullOrWhiteSpace(name))
         {
             profile.Name = name;
         }
 
-        if (root["ottimizzazioni"] is JsonObject tweaks)
+        if (root["optimizations"] is JsonObject tweaks)
         {
             foreach (KeyValuePair<string, JsonNode?> entry in tweaks)
             {
@@ -125,16 +125,16 @@ public static class ProfileService
                     continue;
                 }
 
-                string appName = ReadString(app["nome"]) ?? id;
-                string category = AppCatalog.MigrateCategory(ReadString(app["categoria"]) ?? "");
-                bool selected = app["selezionata"] is not JsonNode flag || flag.GetValueKind() != JsonValueKind.False;
+                string appName = ReadString(app["name"]) ?? id;
+                string category = ReadString(app["category"]) ?? "";
+                bool selected = app["selected"] is not JsonNode flag || flag.GetValueKind() != JsonValueKind.False;
                 profile.Apps.Add(new ProfileApp(id, appName, selected, category));
             }
         }
 
-        profile.OcNotes = ReadString(root["noteOC"]) ?? "";
+        profile.OcNotes = ReadString(root["ocNotes"]) ?? "";
 
-        if (root["promemoria"] is JsonArray reminders)
+        if (root["reminders"] is JsonArray reminders)
         {
             profile.HasReminders = true;
             foreach (JsonNode? node in reminders)
@@ -144,18 +144,18 @@ public static class ProfileService
                     continue;
                 }
 
-                string? text = ReadString(reminder["testo"]);
+                string? text = ReadString(reminder["text"]);
                 if (string.IsNullOrWhiteSpace(text))
                 {
                     continue;
                 }
 
-                bool done = reminder["fatto"] is JsonNode flag && flag.GetValueKind() == JsonValueKind.True;
+                bool done = reminder["done"] is JsonNode flag && flag.GetValueKind() == JsonValueKind.True;
                 profile.Reminders.Add(new ProfileReminder(text, done));
             }
         }
 
-        if (root["linkDriver"] is JsonObject links)
+        if (root["driverLinks"] is JsonObject links)
         {
             foreach (KeyValuePair<string, JsonNode?> entry in links)
             {
@@ -167,7 +167,7 @@ public static class ProfileService
             }
         }
 
-        if (root["aggiornamentiIgnorati"] is JsonArray ignoredUpdates)
+        if (root["ignoredUpdates"] is JsonArray ignoredUpdates)
         {
             foreach (JsonNode? node in ignoredUpdates)
             {
@@ -179,12 +179,12 @@ public static class ProfileService
                 string? ignoredId = ReadString(ignored["id"]);
                 if (!string.IsNullOrWhiteSpace(ignoredId))
                 {
-                    profile.IgnoredUpdates[ignoredId] = ReadString(ignored["nome"]) ?? ignoredId;
+                    profile.IgnoredUpdates[ignoredId] = ReadString(ignored["name"]) ?? ignoredId;
                 }
             }
         }
 
-        if (root["configurazioniTool"] is JsonObject toolBackups)
+        if (root["toolConfigurations"] is JsonObject toolBackups)
         {
             foreach (KeyValuePair<string, JsonNode?> entry in toolBackups)
             {
@@ -196,13 +196,13 @@ public static class ProfileService
             }
         }
 
-        if (root["categorieApp"] is JsonArray categories)
+        if (root["appCategories"] is JsonArray categories)
         {
             profile.HasAppCatalog = true;
             foreach (JsonNode? node in categories)
             {
                 string? rawCategoryName = ReadString(node);
-                string? categoryName = rawCategoryName is null ? null : AppCatalog.MigrateCategory(rawCategoryName);
+                string? categoryName = rawCategoryName;
                 if (!string.IsNullOrWhiteSpace(categoryName) && !profile.AppCategories.Contains(categoryName))
                 {
                     profile.AppCategories.Add(categoryName);
@@ -243,23 +243,23 @@ public static class ProfileService
             apps.Add(new JsonObject
             {
                 ["id"] = app.Id,
-                ["nome"] = app.Name,
-                ["categoria"] = app.Category,
-                ["selezionata"] = app.Selected,
+                ["name"] = app.Name,
+                ["category"] = app.Category,
+                ["selected"] = app.Selected,
             });
         }
 
         var root = new JsonObject
         {
-            ["nome"] = profile.Name,
-            ["versione"] = 1,
-            ["ottimizzazioni"] = tweaks,
+            ["name"] = profile.Name,
+            ["version"] = 1,
+            ["optimizations"] = tweaks,
             ["app"] = apps,
         };
 
         if (profile.OcNotes.Length > 0)
         {
-            root["noteOC"] = profile.OcNotes;
+            root["ocNotes"] = profile.OcNotes;
         }
 
         if (profile.HasReminders)
@@ -269,12 +269,12 @@ public static class ProfileService
             {
                 reminders.Add(new JsonObject
                 {
-                    ["testo"] = reminder.Text,
-                    ["fatto"] = reminder.Done,
+                    ["text"] = reminder.Text,
+                    ["done"] = reminder.Done,
                 });
             }
 
-            root["promemoria"] = reminders;
+            root["reminders"] = reminders;
         }
 
         if (profile.DriverLinks.Count > 0)
@@ -285,7 +285,7 @@ public static class ProfileService
                 links[entry.Key] = entry.Value;
             }
 
-            root["linkDriver"] = links;
+            root["driverLinks"] = links;
         }
 
         if (profile.HasAppCatalog)
@@ -296,7 +296,7 @@ public static class ProfileService
                 categories.Add(JsonValue.Create(category));
             }
 
-            root["categorieApp"] = categories;
+            root["appCategories"] = categories;
         }
 
         if (profile.IgnoredUpdates.Count > 0)
@@ -307,11 +307,11 @@ public static class ProfileService
                 ignoredUpdates.Add(new JsonObject
                 {
                     ["id"] = entry.Key,
-                    ["nome"] = entry.Value,
+                    ["name"] = entry.Value,
                 });
             }
 
-            root["aggiornamentiIgnorati"] = ignoredUpdates;
+            root["ignoredUpdates"] = ignoredUpdates;
         }
 
         if (profile.ToolBackups.Count > 0)
@@ -322,7 +322,7 @@ public static class ProfileService
                 toolBackups[entry.Key] = entry.Value;
             }
 
-            root["configurazioniTool"] = toolBackups;
+            root["toolConfigurations"] = toolBackups;
         }
 
         string? folder = Path.GetDirectoryName(path);

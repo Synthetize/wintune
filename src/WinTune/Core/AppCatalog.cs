@@ -13,18 +13,6 @@ public static class AppCatalog
     public const string OtherCategory = "Other";
     public const string DetectedCategory = "Detected on this PC";
 
-    /// <summary>Converts category names saved in Italian by earlier versions.</summary>
-    public static string MigrateCategory(string name) => name switch
-    {
-        "Altro" => OtherCategory,
-        "Rilevate su questo PC" => DetectedCategory,
-        "Comunicazione" => "Communication",
-        "Utilità" => "Utilities",
-        "Hardware e monitoraggio" => "Hardware & monitoring",
-        "Sviluppo" => "Development",
-        _ => name,
-    };
-
     private static readonly (string Category, string Name, string Id)[] Defaults =
     {
         ("Browser", "Firefox", "Mozilla.Firefox"),

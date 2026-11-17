@@ -189,11 +189,11 @@ public static class ExternalToolService
             "christitus.com/win"),
     };
 
-    private const string BesideKey = "_installaAccantoAWinTune";
+    private const string BesideKey = "_installBesideWinTune";
 
     private static string BackupFolder => Path.Combine(ProfileService.DataFolder, "tool");
 
-    private static string PathsFile => Path.Combine(ProfileService.DataFolder, "tool-percorsi.json");
+    private static string PathsFile => Path.Combine(ProfileService.DataFolder, "tool-paths.json");
 
     /// <summary>"Tool" folder next to WinTune.exe, where tools are installed if the user wants.</summary>
     public static string ToolsFolder =>

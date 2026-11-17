@@ -14,7 +14,7 @@ using WinTune.ViewModels;
 
 namespace WinTune.Views.Pages;
 
-public partial class StrumentiPage : Page
+public partial class UtilitiesPage : Page
 {
     private const string ProfileFilter = "WinTune profile (*.json)|*.json|All files (*.*)|*.*";
 
@@ -22,7 +22,7 @@ public partial class StrumentiPage : Page
     private readonly ObservableCollection<CleanupRowViewModel> _cleanup = new();
     private bool _measuredOnce;
 
-    public StrumentiPage()
+    public UtilitiesPage()
     {
         InitializeComponent();
         _countdownTimer.Tick += (_, _) => UpdateCountdown();
@@ -113,8 +113,8 @@ public partial class StrumentiPage : Page
 
         string label = action.Value switch
         {
-            ShutdownAction.Riavvia => "Restart",
-            ShutdownAction.Sospendi => "Sleep",
+            ShutdownAction.Restart => "Restart",
+            ShutdownAction.Sleep => "Sleep",
             _ => "Shutdown",
         };
 
@@ -229,8 +229,8 @@ public partial class StrumentiPage : Page
                 freed += await CleanupService.CleanAsync(row.Target.Id);
             }
 
-            TweakEngine.LogChange("pulizia.disco", string.Join(", ", targets.Select(t => t.Target.Id)), CleanupService.FormatSize(freed) + " freed");
-            ShowMessage("Cleanup completed", CleanupService.FormatSize(freed) + " liberati.", Wpf.Ui.Controls.InfoBarSeverity.Success);
+            TweakEngine.LogChange("cleanup.disk", string.Join(", ", targets.Select(t => t.Target.Id)), CleanupService.FormatSize(freed) + " freed");
+            ShowMessage("Cleanup completed", CleanupService.FormatSize(freed) + " freed.", Wpf.Ui.Controls.InfoBarSeverity.Success);
         }
         catch (Exception ex)
         {
@@ -290,7 +290,7 @@ public partial class StrumentiPage : Page
             var dialog = new SaveFileDialog
             {
                 Title = "Export profile",
-                FileName = "profilo.json",
+                FileName = "profile.json",
                 Filter = ProfileFilter,
             };
 

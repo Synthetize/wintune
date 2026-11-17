@@ -12,7 +12,8 @@
     <AssemblyName>WinTune</AssemblyName>
     <Version>0.1.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <SatelliteResourceLanguages>it;en</SatelliteResourceLanguages>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <!-- Less memory: no background garbage collector thread and no JIT compiler instrumentation. -->
     <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
     <TieredPGO>false</TieredPGO>

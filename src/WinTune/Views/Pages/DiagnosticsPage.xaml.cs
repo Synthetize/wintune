@@ -12,7 +12,7 @@ using WinTune.ViewModels;
 
 namespace WinTune.Views.Pages;
 
-public partial class DiagnosticaPage : Page
+public partial class DiagnosticsPage : Page
 {
     private const int MaxRows = 400;
 
@@ -21,7 +21,7 @@ public partial class DiagnosticaPage : Page
     private bool _loaded;
     private bool _loading;
 
-    public DiagnosticaPage()
+    public DiagnosticsPage()
     {
         InitializeComponent();
     }
@@ -100,9 +100,9 @@ public partial class DiagnosticaPage : Page
         int unexpected = CountOf(e => e.Source == "Kernel-Power 41" || e.Source == "EventLog 6008");
         int blueScreens = CountOf(e => e.Source == "WER-SystemErrorReporting 1001");
         int hardware = CountOf(e => e.Category == EventLogService.Hardware);
-        int video = CountOf(e => e.Category == EventLogService.SchedaVideo);
-        int disks = CountOf(e => e.Category == EventLogService.Dischi);
-        int apps = CountOf(e => e.Category == EventLogService.Applicazioni);
+        int video = CountOf(e => e.Category == EventLogService.GraphicsCard);
+        int disks = CountOf(e => e.Category == EventLogService.Disks);
+        int apps = CountOf(e => e.Category == EventLogService.Applications);
 
         SummaryList.ItemsSource = new List<SummaryTile>
         {

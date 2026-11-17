@@ -33,7 +33,7 @@
                 <ui:NavigationViewItem
                     Content="Overview"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:PanoramicaPage}">
+                    TargetPageType="{x:Type pages:OverviewPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Home24" />
                     </ui:NavigationViewItem.Icon>
@@ -41,7 +41,7 @@
                 <ui:NavigationViewItem
                     Content="Optimizations"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:OttimizzazioniPage}">
+                    TargetPageType="{x:Type pages:OptimizationsPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Options24" />
                     </ui:NavigationViewItem.Icon>
@@ -73,7 +73,7 @@
                 <ui:NavigationViewItem
                     Content="Updates"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:AggiornamentiPage}">
+                    TargetPageType="{x:Type pages:UpdatesPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="ArrowSync24" />
                     </ui:NavigationViewItem.Icon>
@@ -89,7 +89,7 @@
                 <ui:NavigationViewItem
                     Content="Diagnostics"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:DiagnosticaPage}">
+                    TargetPageType="{x:Type pages:DiagnosticsPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="HeartPulse24" />
                     </ui:NavigationViewItem.Icon>
@@ -97,7 +97,7 @@
                 <ui:NavigationViewItem
                     Content="Utilities"
                     NavigationCacheMode="Enabled"
-                    TargetPageType="{x:Type pages:StrumentiPage}">
+                    TargetPageType="{x:Type pages:UtilitiesPage}">
                     <ui:NavigationViewItem.Icon>
                         <ui:SymbolIcon Symbol="Toolbox24" />
                     </ui:NavigationViewItem.Icon>

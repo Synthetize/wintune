@@ -4,7 +4,7 @@ using System.Text.Json;
 
 namespace WinTune.Core;
 
-/// <summary>Program settings, in %AppData%\WinTune\impostazioni.json.</summary>
+/// <summary>Program settings, in %AppData%\WinTune\settings.json.</summary>
 public sealed class AppSettings
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { WriteIndented = true };
@@ -15,7 +15,7 @@ public sealed class AppSettings
     /// </summary>
     public bool HideOnClose { get; set; } = true;
 
-    private static string Path_ => Path.Combine(ProfileService.DataFolder, "impostazioni.json");
+    private static string Path_ => Path.Combine(ProfileService.DataFolder, "settings.json");
 
     /// <summary>Settings in use, read once at startup.</summary>
     public static AppSettings Current { get; } = Load();

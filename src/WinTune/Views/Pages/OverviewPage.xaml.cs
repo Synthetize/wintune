@@ -17,7 +17,7 @@ namespace WinTune.Views.Pages;
 /// <summary>Row of the "Changed settings" list.</summary>
 public sealed record DifferenceRow(string Title, string Detail);
 
-public partial class PanoramicaPage : Page
+public partial class OverviewPage : Page
 {
     // Reminders proposed the first time; after that the list belongs to the user.
     private static readonly string[] DefaultReminders =
@@ -39,7 +39,7 @@ public partial class PanoramicaPage : Page
     private bool _checksRunning;
     private bool _loadingReminders;
 
-    public PanoramicaPage()
+    public OverviewPage()
     {
         InitializeComponent();
 
