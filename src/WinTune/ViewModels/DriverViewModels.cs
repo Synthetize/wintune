@@ -40,3 +40,76 @@ public sealed class DriverRowViewModel : ObservableObject
         Raise(nameof(LinkNote));
     }
 }
+
+/// <summary>Row of the list of drivers offered by Windows Update.</summary>
+public sealed class DriverOfferRowViewModel : ObservableObject
+{
+    private bool _isSelected = true;
+    private string _status = "";
+
+    public DriverOfferRowViewModel(DriverOffer offer)
+    {
+        Offer = offer;
+    }
+
+    public DriverOffer Offer { get; }
+
+    public string Id => Offer.Id;
+
+    public string Title => Offer.Title;
+
+    public string Detail
+    {
+        get
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            if (Offer.DriverClass.Length > 0)
+            {
+                parts.Add(Offer.DriverClass);
+            }
+
+            if (Offer.Date.Length > 0)
+            {
+                parts.Add(Offer.Date);
+            }
+
+            if (Offer.Size > 0)
+            {
+                parts.Add((Offer.Size / 1048576.0).ToString("0.#") + " MB");
+            }
+
+            if (Offer.RebootRequired)
+            {
+                parts.Add("restart needed");
+            }
+
+            return string.Join("  ·  ", parts);
+        }
+    }
+
+    public bool IsSelected
+    {
+        get => _isSelected;
+        set
+        {
+            if (value != _isSelected)
+            {
+                _isSelected = value;
+                Raise();
+            }
+        }
+    }
+
+    public string Status
+    {
+        get => _status;
+        set
+        {
+            if (value != _status)
+            {
+                _status = value;
+                Raise();
+            }
+        }
+    }
+}

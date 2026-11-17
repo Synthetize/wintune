@@ -21,136 +21,218 @@
             IsClosable="True"
             IsOpen="False" />
 
-        <!--  Automatic Windows Update drivers  -->
-        <ui:Card Margin="0,0,0,10" Padding="16">
-            <StackPanel>
-                <ui:TextBlock FontTypography="Subtitle" Text="Automatic drivers from Windows Update" />
-                <ui:TextBlock
-                    x:Name="AutoStateText"
-                    Margin="0,6,0,2"
-                    FontTypography="BodyStrong" />
-                <ui:TextBlock
-                    FontTypography="Caption"
-                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                    Text="When disabled, Windows Update does not install or overwrite drivers: the ones you install stay. Manual installation always works."
-                    TextWrapping="Wrap" />
-                <WrapPanel Margin="0,10,0,0">
-                    <TextBlock
-                        Margin="0,0,8,6"
-                        VerticalAlignment="Center"
+        <!--  Section buttons, same style as the Optimizations filter  -->
+        <WrapPanel x:Name="SectionPanel" Margin="0,0,0,8">
+            <ToggleButton Margin="0,0,8,8" Click="OnSectionClick" Content="Windows drivers" IsChecked="True" Tag="Updates" />
+            <ToggleButton Margin="0,0,8,8" Click="OnSectionClick" Content="Manufacturer pages" Tag="Hardware" />
+            <ToggleButton Margin="0,0,8,8" Click="OnSectionClick" Content="Automatic drivers" Tag="Auto" />
+        </WrapPanel>
+
+        <StackPanel x:Name="UpdatesPanel">
+            <!--  Driver updates from Windows Update  -->
+            <ui:Card Margin="0,0,0,10" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Driver updates" />
+                    <ui:TextBlock
+                        Margin="0,2,0,8"
+                        FontTypography="Caption"
                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                        Text="Duration" />
-                    <ComboBox
-                        x:Name="DurationBox"
-                        Width="190"
-                        Margin="0,0,8,6"
-                        VerticalAlignment="Center"
-                        SelectedIndex="0"
-                        SelectionChanged="OnDurationChanged">
-                        <ComboBoxItem Content="No expiry" Tag="none" />
-                        <ComboBoxItem Content="1 month" Tag="1" />
-                        <ComboBoxItem Content="2 months" Tag="2" />
-                        <ComboBoxItem Content="3 months" Tag="3" />
-                        <ComboBoxItem Content="Until a date" Tag="date" />
-                    </ComboBox>
-                    <DatePicker
-                        x:Name="UntilPicker"
-                        Width="170"
-                        Margin="0,0,8,6"
-                        VerticalAlignment="Center"
-                        Visibility="Collapsed" />
-                    <ui:Button
-                        x:Name="BlockButton"
-                        Margin="0,0,8,6"
-                        Appearance="Primary"
-                        Click="OnBlockClick"
-                        Content="Turn off automatic drivers" />
-                    <ui:Button
-                        x:Name="UnblockButton"
-                        Margin="0,0,8,6"
-                        Click="OnUnblockClick"
-                        Content="Turn back on now" />
-                </WrapPanel>
-            </StackPanel>
-        </ui:Card>
-
-        <!--  Detected hardware and links  -->
-        <ui:Card Padding="16">
-            <StackPanel>
-                <Grid Margin="0,0,0,6">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel Grid.Column="0">
-                        <ui:TextBlock FontTypography="Subtitle" Text="Hardware and driver pages" />
-                        <ui:TextBlock
-                            Margin="0,2,0,0"
-                            FontTypography="Caption"
+                        Text="These are the drivers that Windows Update offers: they are tested by Microsoft, but they are not necessarily the latest versions the manufacturers have released (NVIDIA, AMD, Intel and laptop makers often publish newer ones on their own sites: see the Manufacturer pages section). Tick the ones to install. It works even if automatic drivers are turned off. Recommended: first create a restore point from the Utilities section."
+                        TextWrapping="Wrap" />
+                    <WrapPanel>
+                        <ui:Button
+                            x:Name="ScanButton"
+                            Margin="0,0,8,6"
+                            Appearance="Primary"
+                            Click="OnScanClick"
+                            Content="Check for driver updates"
+                            Icon="{ui:SymbolIcon ArrowSync24}" />
+                        <ui:Button
+                            x:Name="InstallDriversButton"
+                            Margin="0,0,8,6"
+                            Click="OnInstallDriversClick"
+                            Content="Install selected"
+                            Icon="{ui:SymbolIcon ArrowDownload24}"
+                            IsEnabled="False" />
+                        <ui:ProgressRing
+                            x:Name="ScanRing"
+                            Width="20"
+                            Height="20"
+                            Margin="6,0,8,6"
+                            IsIndeterminate="True"
+                            Visibility="Collapsed" />
+                        <TextBlock
+                            x:Name="ScanStatusText"
+                            Margin="4,0,0,6"
+                            VerticalAlignment="Center"
                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                            Text="Each component has a suggested link. With the pencil you replace it with the exact page: it is saved in the profile."
+                            Text="Not checked yet."
                             TextWrapping="Wrap" />
-                    </StackPanel>
-                    <ui:Button
-                        Grid.Column="1"
-                        Margin="12,0,0,0"
-                        VerticalAlignment="Top"
-                        Click="OnDetectClick"
-                        Content="Detect again"
-                        Icon="{ui:SymbolIcon ArrowSync24}" />
-                </Grid>
+                    </WrapPanel>
+                    <ItemsControl x:Name="OfferList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Padding="0,5"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1">
+                                    <CheckBox IsChecked="{Binding IsSelected, Mode=TwoWay}">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" TextWrapping="Wrap" />
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                    Text="{Binding Detail}" />
+                                                <TextBlock
+                                                    Margin="10,0,0,0"
+                                                    FontSize="11"
+                                                    Text="{Binding Status}" />
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </CheckBox>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ui:Card>
 
-                <ItemsControl x:Name="HardwareList" Focusable="False">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border
-                                Padding="0,5"
-                                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
-                                BorderThickness="0,0,0,1">
-                                <Grid MinHeight="40">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="120" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock
-                                        Grid.Column="0"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                        Text="{Binding Type}" />
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding Model}" TextTrimming="CharacterEllipsis" />
+        </StackPanel>
+        <StackPanel x:Name="HardwarePanel" Visibility="Collapsed">
+            <!--  Detected hardware and links  -->
+            <ui:Card Padding="16">
+                <StackPanel>
+                    <Grid Margin="0,0,0,6">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <ui:TextBlock FontTypography="Subtitle" Text="Hardware and driver pages" />
+                            <ui:TextBlock
+                                Margin="0,2,0,0"
+                                FontTypography="Caption"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Text="Each component has a suggested link. With the pencil you replace it with the exact page: it is saved in the profile."
+                                TextWrapping="Wrap" />
+                        </StackPanel>
+                        <ui:Button
+                            Grid.Column="1"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Top"
+                            Click="OnDetectClick"
+                            Content="Detect again"
+                            Icon="{ui:SymbolIcon ArrowSync24}" />
+                    </Grid>
+
+                    <ItemsControl x:Name="HardwareList" Focusable="False">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border
+                                    Padding="0,5"
+                                    BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1">
+                                    <Grid MinHeight="40">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="120" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
                                         <TextBlock
-                                            FontSize="11"
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
                                             Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Detail}"
-                                            TextTrimming="CharacterEllipsis"
-                                            Visibility="{Binding DetailVisibility}" />
-                                    </StackPanel>
-                                    <ui:Button
-                                        Grid.Column="2"
-                                        Margin="8,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Click="OnOpenLinkClick"
-                                        Content="Open page"
-                                        Icon="{ui:SymbolIcon Open24}"
-                                        ToolTip="{Binding Link}" />
-                                    <ui:Button
-                                        Grid.Column="3"
-                                        Margin="6,0,0,0"
-                                        Padding="6"
-                                        VerticalAlignment="Center"
-                                        Click="OnEditLinkClick"
-                                        Icon="{ui:SymbolIcon Edit24}"
-                                        ToolTip="{Binding LinkNote}" />
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
-        </ui:Card>
+                                            Text="{Binding Type}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding Model}" TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="11"
+                                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                                Text="{Binding Detail}"
+                                                TextTrimming="CharacterEllipsis"
+                                                Visibility="{Binding DetailVisibility}" />
+                                        </StackPanel>
+                                        <ui:Button
+                                            Grid.Column="2"
+                                            Margin="8,0,0,0"
+                                            VerticalAlignment="Center"
+                                            Click="OnOpenLinkClick"
+                                            Content="Open page"
+                                            Icon="{ui:SymbolIcon Open24}"
+                                            ToolTip="{Binding Link}" />
+                                        <ui:Button
+                                            Grid.Column="3"
+                                            Margin="6,0,0,0"
+                                            Padding="6"
+                                            VerticalAlignment="Center"
+                                            Click="OnEditLinkClick"
+                                            Icon="{ui:SymbolIcon Edit24}"
+                                            ToolTip="{Binding LinkNote}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ui:Card>
+        </StackPanel>
+        <StackPanel x:Name="AutoPanel" Visibility="Collapsed">
+            <!--  Automatic Windows Update drivers  -->
+            <ui:Card Margin="0,0,0,10" Padding="16">
+                <StackPanel>
+                    <ui:TextBlock FontTypography="Subtitle" Text="Automatic drivers from Windows Update" />
+                    <ui:TextBlock
+                        x:Name="AutoStateText"
+                        Margin="0,6,0,2"
+                        FontTypography="BodyStrong" />
+                    <ui:TextBlock
+                        FontTypography="Caption"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="When disabled, Windows Update does not install or overwrite drivers: the ones you install stay. Manual installation always works."
+                        TextWrapping="Wrap" />
+                    <WrapPanel Margin="0,10,0,0">
+                        <TextBlock
+                            Margin="0,0,8,6"
+                            VerticalAlignment="Center"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Text="Duration" />
+                        <ComboBox
+                            x:Name="DurationBox"
+                            Width="190"
+                            Margin="0,0,8,6"
+                            VerticalAlignment="Center"
+                            SelectedIndex="0"
+                            SelectionChanged="OnDurationChanged">
+                            <ComboBoxItem Content="No expiry" Tag="none" />
+                            <ComboBoxItem Content="1 month" Tag="1" />
+                            <ComboBoxItem Content="2 months" Tag="2" />
+                            <ComboBoxItem Content="3 months" Tag="3" />
+                            <ComboBoxItem Content="Until a date" Tag="date" />
+                        </ComboBox>
+                        <DatePicker
+                            x:Name="UntilPicker"
+                            Width="170"
+                            Margin="0,0,8,6"
+                            VerticalAlignment="Center"
+                            Visibility="Collapsed" />
+                        <ui:Button
+                            x:Name="BlockButton"
+                            Margin="0,0,8,6"
+                            Appearance="Primary"
+                            Click="OnBlockClick"
+                            Content="Turn off automatic drivers" />
+                        <ui:Button
+                            x:Name="UnblockButton"
+                            Margin="0,0,8,6"
+                            Click="OnUnblockClick"
+                            Content="Turn back on now" />
+                    </WrapPanel>
+                </StackPanel>
+            </ui:Card>
+
+        </StackPanel>
     </StackPanel>
 </Page>
