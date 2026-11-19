@@ -70,6 +70,9 @@ public partial class App : Application
             TrayService.Enable();
         }
 
+        // Removes the exe left by the previous self-update.
+        SelfUpdateService.CleanupOldFile();
+
         // Accented-letters shortcuts (only if turned on).
         KeyboardService.Apply();
 

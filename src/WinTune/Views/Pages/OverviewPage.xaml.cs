@@ -54,6 +54,7 @@ public partial class OverviewPage : Page
         LoadRemindersAndNotes();
         _ = LoadStartupStateAsync();
         LoadCloseAction();
+        _ = LoadSelfUpdateAsync();
 
         if (!_checksLoaded)
         {
@@ -238,6 +239,134 @@ public partial class OverviewPage : Page
         {
             StartupSwitch.IsChecked = !enable;
             await Dialogs.InfoAsync("Change failed", ex.Message);
+        }
+    }
+
+    // ---------- WinTune updates (GitHub releases) ----------
+
+    private ReleaseInfo? _release;
+    private bool _selfUpdateBusy;
+
+    private async Task LoadSelfUpdateAsync()
+    {
+        SelfUpdateSwitch.IsChecked = AppSettings.Current.CheckSelfUpdates;
+        SelfUpdateTitle.Text = "Check for WinTune updates (running " + SelfUpdateService.CurrentVersion + ")";
+
+        // Automatic check: only if turned on and not done in the last day.
+        if (AppSettings.Current.CheckSelfUpdates
+            && DateTime.Now - AppSettings.Current.LastSelfUpdateCheck > TimeSpan.FromDays(1)
+            && _release is null)
+        {
+            await CheckSelfUpdateAsync(manual: false);
+        }
+    }
+
+    private async void OnSelfUpdateSwitchClick(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Current.CheckSelfUpdates = SelfUpdateSwitch.IsChecked == true;
+        AppSettings.Current.Save();
+
+        if (AppSettings.Current.CheckSelfUpdates)
+        {
+            await CheckSelfUpdateAsync(manual: false);
+        }
+    }
+
+    private async void OnCheckSelfUpdateClick(object sender, RoutedEventArgs e) => await CheckSelfUpdateAsync(manual: true);
+
+    private async Task CheckSelfUpdateAsync(bool manual)
+    {
+        if (_selfUpdateBusy)
+        {
+            return;
+        }
+
+        _selfUpdateBusy = true;
+        CheckSelfUpdateButton.IsEnabled = false;
+        SelfUpdateStatusText.Text = "Checking GitHub...";
+
+        try
+        {
+            ReleaseInfo? release = await SelfUpdateService.GetLatestAsync();
+            AppSettings.Current.LastSelfUpdateCheck = DateTime.Now;
+            AppSettings.Current.Save();
+
+            if (release is not null && SelfUpdateService.IsNewer(release))
+            {
+                _release = release;
+                SelfUpdateStatusText.Text = "New release available: " + release.Tag + " (you have " + SelfUpdateService.CurrentVersion + ").";
+                InstallSelfUpdateButton.Visibility = Visibility.Visible;
+                ReleaseNotesButton.Visibility = release.PageUrl.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            else
+            {
+                _release = null;
+                InstallSelfUpdateButton.Visibility = Visibility.Collapsed;
+                ReleaseNotesButton.Visibility = Visibility.Collapsed;
+                SelfUpdateStatusText.Text = release is null
+                    ? "No release found on GitHub."
+                    : "WinTune is up to date (" + SelfUpdateService.CurrentVersion + ").";
+            }
+        }
+        catch (Exception ex)
+        {
+            SelfUpdateStatusText.Text = manual || AppSettings.Current.CheckSelfUpdates
+                ? "Could not check for updates: " + ex.Message
+                : "";
+        }
+        finally
+        {
+            CheckSelfUpdateButton.IsEnabled = true;
+            _selfUpdateBusy = false;
+        }
+    }
+
+    private void OnReleaseNotesClick(object sender, RoutedEventArgs e)
+    {
+        if (_release is not null && _release.PageUrl.Length > 0)
+        {
+            try
+            {
+                UrlUtil.Open(_release.PageUrl);
+            }
+            catch
+            {
+                // The link could not be opened: nothing else to do.
+            }
+        }
+    }
+
+    private async void OnInstallSelfUpdateClick(object sender, RoutedEventArgs e)
+    {
+        if (_release is null || _selfUpdateBusy)
+        {
+            return;
+        }
+
+        bool confirmed = await Dialogs.ConfirmAsync(
+            "Install WinTune " + _release.Tag + "?",
+            "WinTune downloads the new version, checks it and restarts. Anything you are doing in WinTune is closed.",
+            "Install");
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        _selfUpdateBusy = true;
+        InstallSelfUpdateButton.IsEnabled = false;
+        CheckSelfUpdateButton.IsEnabled = false;
+        SelfUpdateStatusText.Text = "Downloading " + _release.Tag + "...";
+
+        string? error = await SelfUpdateService.InstallAsync(_release);
+
+        // On success the program restarts and this code does not matter any more.
+        if (error is not null)
+        {
+            SelfUpdateStatusText.Text = error;
+            InstallSelfUpdateButton.IsEnabled = true;
+            CheckSelfUpdateButton.IsEnabled = true;
+            _selfUpdateBusy = false;
         }
     }
 

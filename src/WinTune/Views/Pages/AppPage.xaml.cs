@@ -1381,9 +1381,13 @@ public partial class AppPage : Page
         }
     }
 
-    private async void OnUpgradeSelectedClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: false);
+    private async void OnUpgradeSelectedClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: false, asAdministrator: false);
 
-    private async void OnUpgradeInteractiveClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: true);
+    private async void OnUpgradeInteractiveClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: true, asAdministrator: false);
+
+    private async void OnUpgradeAdminClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: false, asAdministrator: true);
+
+    private async void OnUpgradeAdminInteractiveClick(object sender, RoutedEventArgs e) => await UpgradeSelectedAsync(interactive: true, asAdministrator: true);
 
     /// <summary>Opens under the arrow the menu with the other ways to update.</summary>
     private void OnUpgradeMenuClick(object sender, RoutedEventArgs e)
@@ -1403,7 +1407,7 @@ public partial class AppPage : Page
         UpgradeErrorsPanel.Visibility = failures.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task UpgradeSelectedAsync(bool interactive)
+    private async Task UpgradeSelectedAsync(bool interactive, bool asAdministrator)
     {
         if (_working)
         {
@@ -1421,7 +1425,9 @@ public partial class AppPage : Page
             targets.Count == 1 ? "Update " + targets[0].Name + "?" : "Update " + targets.Count + " apps?",
             interactive
                 ? "For each app its installer window will open: follow the instructions to the end."
-                : "Open apps may be closed during the update.",
+                : asAdministrator
+                    ? "Runs with administrator rights. Open apps may be closed during the update."
+                    : "Runs without administrator rights; if an app needs them, it is reported and you can retry it with \"Update as administrator\". Open apps may be closed during the update.",
             "Update");
 
         if (!confirmed)
@@ -1454,7 +1460,7 @@ public partial class AppPage : Page
                 UpgradeStatusText.Text = "Updating " + done + " of " + targets.Count + ": " + row.Name;
                 row.Status = "Updating...";
 
-                (bool ok, string message) = await WingetService.UpgradeAsync(row.Id, interactive);
+                (bool ok, string message) = await WingetService.UpgradeAsync(row.Id, interactive, asAdministrator);
 
                 TweakEngine.LogChange(
                     "app." + row.Id,
@@ -1471,8 +1477,16 @@ public partial class AppPage : Page
                 {
                     // The tile only holds the result; the full reason goes in the list below.
                     failed.Add(new UpgradeFailure(row.Name, message));
-                    row.Status = "Failed (reason below)";
-                    row.IsSelected = false;
+                    if (asAdministrator)
+                    {
+                        row.Status = "Failed (reason below)";
+                        row.IsSelected = false;
+                    }
+                    else
+                    {
+                        // Stays ticked: one click on "Update as administrator" tries again.
+                        row.Status = "Failed: run as administrator";
+                    }
                 }
             }
         }
@@ -1510,6 +1524,7 @@ public partial class AppPage : Page
     {
         UpgradeRing.Visibility = busy ? Visibility.Visible : Visibility.Collapsed;
         UpgradeButton.IsEnabled = !busy;
+        UpgradeAdminButton.IsEnabled = !busy;
         UpgradeMenuButton.IsEnabled = !busy;
         UpgradeSelectAllButton.IsEnabled = !busy;
         IgnoreUpgradesButton.IsEnabled = !busy;

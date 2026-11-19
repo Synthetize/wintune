@@ -90,6 +90,56 @@
                     VerticalAlignment="Center"
                     Click="OnCloseActionClick" />
             </Grid>
+            <Border
+                Height="1"
+                Margin="0,8,0,8"
+                Background="{DynamicResource ControlStrokeColorDefaultBrush}" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock x:Name="SelfUpdateTitle" Text="Check for WinTune updates" />
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="Looks once a day for a new release on GitHub. Nothing is installed without your click."
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        x:Name="SelfUpdateStatusText"
+                        Margin="0,4,0,0"
+                        FontSize="12"
+                        TextWrapping="Wrap" />
+                    <WrapPanel Margin="0,6,0,0">
+                        <ui:Button
+                            x:Name="CheckSelfUpdateButton"
+                            Margin="0,0,8,0"
+                            Click="OnCheckSelfUpdateClick"
+                            Content="Check now"
+                            Icon="{ui:SymbolIcon ArrowSync24}" />
+                        <ui:Button
+                            x:Name="InstallSelfUpdateButton"
+                            Margin="0,0,8,0"
+                            Appearance="Primary"
+                            Click="OnInstallSelfUpdateClick"
+                            Content="Install update"
+                            Icon="{ui:SymbolIcon ArrowDownload24}"
+                            Visibility="Collapsed" />
+                        <ui:Button
+                            x:Name="ReleaseNotesButton"
+                            Click="OnReleaseNotesClick"
+                            Content="What's new"
+                            Visibility="Collapsed" />
+                    </WrapPanel>
+                </StackPanel>
+                <ui:ToggleSwitch
+                    x:Name="SelfUpdateSwitch"
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Top"
+                    Click="OnSelfUpdateSwitchClick" />
+            </Grid>
             </StackPanel>
         </Border>
 

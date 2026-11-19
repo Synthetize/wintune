@@ -297,11 +297,17 @@ public static class WingetService
     /// Updates an app. It can take several minutes. Normally the installer works without showing itself;
     /// in interactive mode it opens its window, useful when it hangs or stops by itself.
     /// </summary>
-    public static async Task<(bool Ok, string Message)> UpgradeAsync(string id, bool interactive = false)
+    public static async Task<(bool Ok, string Message)> UpgradeAsync(string id, bool interactive = false, bool asAdministrator = false)
     {
         if (!IsValidId(id))
         {
             return (false, "Invalid ID.");
+        }
+
+        // Many installers misbehave when elevated: by default the update runs as the normal user.
+        if (!asAdministrator)
+        {
+            return await UpgradeAsUserAsync(id, interactive);
         }
 
         try
@@ -351,21 +357,21 @@ public static class WingetService
     }
 
     /// <summary>
-    /// Runs "winget uninstall" without administrator rights, as the user who is logged in,
-    /// through a temporary scheduled task (the only reliable way to drop elevation).
+    /// Runs winget without administrator rights, as the user who is logged in, through a temporary
+    /// scheduled task (the only reliable way to drop elevation). <paramref name="wingetArguments"/> must be
+    /// PowerShell-safe (IDs in single quotes). Returns the exit code of winget and its last output line.
     /// </summary>
-    private static async Task<(bool Ok, string Message)> UninstallAsUserAsync(string id)
+    private static async Task<(int? ExitCode, string LastLine)> RunWingetAsUserAsync(string wingetArguments, int timeoutMs)
     {
-        string work = Path.Combine(Path.GetTempPath(), "WinTune-uninstall-" + Guid.NewGuid().ToString("N"));
-        string taskName = "WinTune-uninstall-" + Guid.NewGuid().ToString("N");
+        string work = Path.Combine(Path.GetTempPath(), "WinTune-winget-" + Guid.NewGuid().ToString("N"));
+        string taskName = "WinTune-winget-" + Guid.NewGuid().ToString("N");
         Directory.CreateDirectory(work);
         string outFile = Path.Combine(work, "out.txt");
         string codeFile = Path.Combine(work, "code.txt");
-        string safeId = id.Replace("'", "''");
 
         string inner =
             "$ErrorActionPreference='Continue'; "
-            + "& winget uninstall --id '" + safeId + "' --exact --silent --accept-source-agreements --disable-interactivity *> '" + outFile + "'; "
+            + "& winget " + wingetArguments + " *> '" + outFile + "'; "
             + "$LASTEXITCODE | Out-File -Encoding ascii '" + codeFile + "'";
         string encoded = Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(inner));
 
@@ -374,7 +380,7 @@ public static class WingetService
             + "if (-not $u) { Write-Output 'NOUSER'; exit 1 }; "
             + "$a = New-ScheduledTaskAction -Execute 'conhost.exe' -Argument '--headless powershell.exe -NoProfile -EncodedCommand " + encoded + "'; "
             + "$p = New-ScheduledTaskPrincipal -UserId $u -LogonType Interactive -RunLevel Limited; "
-            + "$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries; "
+            + "$s = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -ExecutionTimeLimit (New-TimeSpan -Hours 2); "
             + "Register-ScheduledTask -TaskName '" + taskName + "' -Action $a -Principal $p -Settings $s -Force | Out-Null; "
             + "Start-ScheduledTask -TaskName '" + taskName + "'; "
             + "Start-Sleep -Seconds 3; "
@@ -383,27 +389,21 @@ public static class WingetService
 
         try
         {
-            ProcessResult run = await ProcessRunner.RunPowerShellAsync(script, 30 * 60 * 1000);
+            ProcessResult run = await ProcessRunner.RunPowerShellAsync(script, timeoutMs);
             if (run.Output.Contains("NOUSER", StringComparison.Ordinal))
             {
-                return (false, "No user is logged in to run the uninstaller.");
+                return (null, "No user is logged in to run winget.");
             }
 
             string output = File.Exists(outFile) ? File.ReadAllText(outFile).Trim() : "";
             string codeText = File.Exists(codeFile) ? File.ReadAllText(codeFile).Trim() : "";
-            bool ok = codeText == "0";
-
-            if (ok)
-            {
-                return (true, "Uninstalled");
-            }
-
             string last = output.Split('\n').Select(l => l.Trim()).LastOrDefault(l => l.Length > 0) ?? run.Error;
-            return (false, "Uninstall failed (as the current user): " + last);
+
+            return (int.TryParse(codeText, out int code) ? code : null, last);
         }
         catch (Exception ex)
         {
-            return (false, ex.Message);
+            return (null, ex.Message);
         }
         finally
         {
@@ -416,6 +416,35 @@ public static class WingetService
                 // Temporary files: nothing to do if they cannot be removed.
             }
         }
+    }
+
+    private static async Task<(bool Ok, string Message)> UninstallAsUserAsync(string id)
+    {
+        string safeId = id.Replace("'", "''");
+        (int? code, string last) = await RunWingetAsUserAsync(
+            "uninstall --id '" + safeId + "' --exact --silent --accept-source-agreements --disable-interactivity",
+            30 * 60 * 1000);
+
+        return code == 0
+            ? (true, "Uninstalled")
+            : (false, "Uninstall failed (as the current user): " + last);
+    }
+
+    /// <summary>"winget upgrade" without administrator rights.</summary>
+    private static async Task<(bool Ok, string Message)> UpgradeAsUserAsync(string id, bool interactive)
+    {
+        string safeId = id.Replace("'", "''");
+        (int? code, string last) = await RunWingetAsUserAsync(
+            "upgrade --id '" + safeId + "' --exact --source winget " + (interactive ? "--interactive " : "--silent ")
+                + "--accept-package-agreements --accept-source-agreements --disable-interactivity",
+            45 * 60 * 1000);
+
+        if (code is 0 || code == UpdateNotApplicable)
+        {
+            return (true, "Updated");
+        }
+
+        return (false, "Run as administrator. winget said: " + last);
     }
 
     /// <summary>

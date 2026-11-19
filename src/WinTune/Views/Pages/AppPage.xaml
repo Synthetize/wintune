@@ -123,9 +123,9 @@
                                 Margin="0,0,1,0"
                                 Appearance="Primary"
                                 Click="OnUpgradeSelectedClick"
-                                Content="Update as administrator"
+                                Content="Update"
                                 Icon="{ui:SymbolIcon ArrowUpload24}"
-                                ToolTip="Updates the selected apps with administrator rights" />
+                                ToolTip="Updates the selected apps without administrator rights (the safest way for most apps)" />
                             <!--  Arrow next to the button: other ways to update  -->
                             <ui:Button
                                 x:Name="UpgradeMenuButton"
@@ -138,11 +138,20 @@
                                 ToolTip="Other ways to update">
                                 <ui:Button.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Click="OnUpgradeSelectedClick" Header="Update as administrator" />
-                                        <MenuItem Click="OnUpgradeInteractiveClick" Header="Update as administrator, showing the installer" />
+                                        <MenuItem Click="OnUpgradeSelectedClick" Header="Update" />
+                                        <MenuItem Click="OnUpgradeInteractiveClick" Header="Update, showing the installer" />
+                                        <MenuItem Click="OnUpgradeAdminClick" Header="Update as administrator" />
+                                        <MenuItem Click="OnUpgradeAdminInteractiveClick" Header="Update as administrator, showing the installer" />
                                     </ContextMenu>
                                 </ui:Button.ContextMenu>
                             </ui:Button>
+                            <ui:Button
+                                x:Name="UpgradeAdminButton"
+                                Margin="0,0,8,0"
+                                Click="OnUpgradeAdminClick"
+                                Content="Update as administrator"
+                                Icon="{ui:SymbolIcon Shield24}"
+                                ToolTip="Use this if an update fails with Run as administrator" />
                             <ui:Button
                                 x:Name="UpgradeSelectAllButton"
                                 Margin="0,0,8,0"

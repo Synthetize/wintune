@@ -32,6 +32,15 @@ Copyright (c) 2022 CT Tech Group LLC. The file is regenerated with `tools/gen_wi
 
 Sensors: [LibreHardwareMonitor](https://github.com/LibreHardwareMonitor/LibreHardwareMonitor) (MPL-2.0).
 
+## Releases and self-update
+
+Pushing a tag such as `v1.2.0` runs the workflow in `.github/workflows/release.yml`: it builds `WinTune.exe`, computes its SHA-256 and publishes both in a GitHub release. WinTune can look for the latest release (Overview, "Check for WinTune updates"), verify the hash and replace itself. The version of the build is the tag without the `v`.
+
+```
+git tag v1.2.0
+git push origin v1.2.0
+```
+
 ## Where the data lives
 
 Folder `%AppData%\WinTune`:

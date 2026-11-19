@@ -19,6 +19,12 @@ public sealed class AppSettings
     /// <summary>The Overview warns when the temporary files take at least this percentage of the system drive.</summary>
     public double TempWarningPercent { get; set; } = 5;
 
+    /// <summary>True: WinTune looks for a new release on GitHub (at most once a day).</summary>
+    public bool CheckSelfUpdates { get; set; }
+
+    /// <summary>When WinTune last looked for a new release.</summary>
+    public DateTime LastSelfUpdateCheck { get; set; } = DateTime.MinValue;
+
     /// <summary>True: the accented-letters shortcuts are active (see <see cref="KeyboardService"/>).</summary>
     public bool KeyboardEnabled { get; set; }
 
