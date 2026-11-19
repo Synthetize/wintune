@@ -260,7 +260,7 @@ public partial class AppPage : Page
             {
                 string categoryName = string.IsNullOrWhiteSpace(app.Category) ? AppCatalog.OtherCategory : app.Category;
                 AppCategoryViewModel category = FindCategory(categoryName) ?? AddCategory(categoryName);
-                AddRow(category, app.Id, app.Name, app.Selected);
+                AddRow(category, app.Id, app.Name, app.Selected, app.Location);
             }
         }
         catch (Exception ex)
@@ -287,9 +287,9 @@ public partial class AppPage : Page
         return category;
     }
 
-    private AppRowViewModel AddRow(AppCategoryViewModel category, string id, string name, bool selected)
+    private AppRowViewModel AddRow(AppCategoryViewModel category, string id, string name, bool selected, string location = "")
     {
-        var row = new AppRowViewModel(id, name, selected, category.Name);
+        var row = new AppRowViewModel(id, name, selected, category.Name, location);
         row.PropertyChanged += OnAppRowChanged;
         category.Apps.Add(row);
         return row;
@@ -297,7 +297,7 @@ public partial class AppPage : Page
 
     private void OnAppRowChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (!_loadingApps && e.PropertyName == nameof(AppRowViewModel.IsSelected))
+        if (!_loadingApps && e.PropertyName is nameof(AppRowViewModel.IsSelected) or nameof(AppRowViewModel.Location))
         {
             SaveApps();
             UpdateSelectionSummary();
@@ -314,7 +314,7 @@ public partial class AppPage : Page
             profile.AppCategories.AddRange(_categories.Select(c => c.Name));
 
             profile.Apps.Clear();
-            profile.Apps.AddRange(AllApps.Select(a => new ProfileApp(a.Id, a.Name, a.IsSelected, a.Category)));
+            profile.Apps.AddRange(AllApps.Select(a => new ProfileApp(a.Id, a.Name, a.IsSelected, a.Category, a.Location)));
 
             profile.HasAppCatalog = true;
             ProfileService.Save(profile);
@@ -814,6 +814,59 @@ public partial class AppPage : Page
     }
 
     /// <summary>Installs or uninstalls the apps one after the other, updating the state of each row.</summary>
+    private static bool HasFiles(string folder)
+    {
+        try
+        {
+            return System.IO.Directory.Exists(folder) && System.IO.Directory.EnumerateFileSystemEntries(folder).Any();
+        }
+        catch
+        {
+            return true;
+        }
+    }
+
+    private void OnSetLocationClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element || element.DataContext is not AppRowViewModel row)
+        {
+            return;
+        }
+
+        var dialog = new Microsoft.Win32.OpenFolderDialog
+        {
+            Title = "Install folder for " + row.Name,
+            Multiselect = false,
+        };
+
+        if (row.Location.Length > 0 && System.IO.Directory.Exists(row.Location))
+        {
+            dialog.InitialDirectory = row.Location;
+        }
+
+        if (dialog.ShowDialog() != true || string.IsNullOrWhiteSpace(dialog.FolderName))
+        {
+            return;
+        }
+
+        string folder = dialog.FolderName.TrimEnd('\\');
+        if (folder.Contains('"') || !System.IO.Path.IsPathRooted(folder))
+        {
+            ShowMessage("Invalid folder", "Choose a folder on a drive of this PC.", Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            return;
+        }
+
+        row.Location = folder;
+    }
+
+    private void OnClearLocationClick(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement element && element.DataContext is AppRowViewModel row)
+        {
+            row.Location = "";
+        }
+    }
+
     private async Task RunOnAppsAsync(List<AppRowViewModel> targets, bool install)
     {
         string verb = install ? "Installing" : "Uninstalling";
@@ -835,7 +888,7 @@ public partial class AppPage : Page
                 row.Status = verb + "...";
 
                 (bool ok, string message) = install
-                    ? await WingetService.InstallAsync(row.Id)
+                    ? await WingetService.InstallAsync(row.Id, row.Location)
                     : await WingetService.UninstallAsync(row.Id);
 
                 TweakEngine.LogChange(
@@ -855,6 +908,12 @@ public partial class AppPage : Page
                     _installedIds?.Add(row.Id);
                     row.IsInstalled = true;
                     row.Status = "Installed";
+
+                    // Not every installer accepts a folder: if nothing is there, tell it.
+                    if (row.Location.Length > 0 && !HasFiles(row.Location))
+                    {
+                        row.Status = "Installed (the installer ignored the folder)";
+                    }
                 }
                 else
                 {

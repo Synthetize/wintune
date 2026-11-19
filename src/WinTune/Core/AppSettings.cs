@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 
@@ -14,6 +15,18 @@ public sealed class AppSettings
     /// False: the X button closes the program.
     /// </summary>
     public bool HideOnClose { get; set; } = true;
+
+    /// <summary>The Overview warns when the temporary files take at least this percentage of the system drive.</summary>
+    public double TempWarningPercent { get; set; } = 5;
+
+    /// <summary>True: the accented-letters shortcuts are active (see <see cref="KeyboardService"/>).</summary>
+    public bool KeyboardEnabled { get; set; }
+
+    /// <summary>Key held to type the special characters: "RightAlt" or "RightCtrl".</summary>
+    public string KeyboardTrigger { get; set; } = KeyboardService.RightAlt;
+
+    /// <summary>Table of the shortcuts.</summary>
+    public List<KeyMapping> KeyboardMappings { get; set; } = KeyMapping.Defaults();
 
     private static string Path_ => Path.Combine(ProfileService.DataFolder, "settings.json");
 

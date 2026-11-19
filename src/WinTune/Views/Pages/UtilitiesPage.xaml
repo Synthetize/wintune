@@ -27,39 +27,62 @@
                     Margin="0,2,0,14"
                     FontTypography="Caption"
                     Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                    Text="Shutdown and restart stay scheduled even if you close WinTune. For sleep, WinTune must stay open."
+                    Text="Shutdown and restart stay scheduled even if you close WinTune. For sleep, WinTune must stay open. Type the time as 90, 45m, 2h, 2h30 or 1:30, or a time of the day like at 03:30."
                     TextWrapping="Wrap" />
-                <StackPanel Margin="0,0,0,12" Orientation="Horizontal">
+                <WrapPanel Margin="0,0,0,6">
                     <ui:Button
-                        Margin="0,0,8,0"
+                        Margin="0,0,8,6"
                         Click="OnPresetClick"
                         Content="15 min"
-                        Tag="15" />
+                        Tag="15m" />
                     <ui:Button
-                        Margin="0,0,8,0"
+                        Margin="0,0,8,6"
                         Click="OnPresetClick"
                         Content="30 min"
-                        Tag="30" />
+                        Tag="30m" />
                     <ui:Button
-                        Margin="0,0,8,0"
+                        Margin="0,0,8,6"
                         Click="OnPresetClick"
                         Content="1 hour"
-                        Tag="60" />
+                        Tag="1h" />
                     <ui:Button
+                        Margin="0,0,8,6"
                         Click="OnPresetClick"
                         Content="2 hours"
-                        Tag="120" />
-                </StackPanel>
+                        Tag="2h" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnPresetClick"
+                        Content="3 hours"
+                        Tag="3h" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnPresetClick"
+                        Content="4 hours"
+                        Tag="4h" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnPresetClick"
+                        Content="6 hours"
+                        Tag="6h" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnPresetClick"
+                        Content="8 hours"
+                        Tag="8h" />
+                </WrapPanel>
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
                         Margin="0,0,8,0"
                         VerticalAlignment="Center"
-                        Text="Minutes" />
+                        Text="Time" />
                     <TextBox
                         x:Name="MinutesBox"
-                        Width="90"
+                        Width="130"
                         VerticalAlignment="Center"
-                        Text="60" />
+                        Text="1h"
+                        TextChanged="OnTimeTextChanged"
+                        ToolTip="Examples: 90, 45m, 2h, 2h30, 1:30, or a time of the day: at 03:30" />
                     <ComboBox
                         x:Name="ActionBox"
                         Width="150"
@@ -82,6 +105,11 @@
                         Content="Cancel"
                         Icon="{ui:SymbolIcon Dismiss24}" />
                 </StackPanel>
+                <TextBlock
+                    x:Name="TimePreview"
+                    Margin="0,8,0,0"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
                 <ui:TextBlock
                     x:Name="CountdownText"
                     Margin="0,14,0,0"

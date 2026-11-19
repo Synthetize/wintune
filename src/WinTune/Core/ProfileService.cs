@@ -9,7 +9,7 @@ using System.Text.Json.Nodes;
 namespace WinTune.Core;
 
 /// <summary>An app of the automatic install list.</summary>
-public sealed record ProfileApp(string Id, string Name, bool Selected, string Category = "");
+public sealed record ProfileApp(string Id, string Name, bool Selected, string Category = "", string Location = "");
 
 /// <summary>A manual reminder on the Overview (e.g. "Enable EXPO in the BIOS").</summary>
 public sealed record ProfileReminder(string Text, bool Done);
@@ -128,7 +128,8 @@ public static class ProfileService
                 string appName = ReadString(app["name"]) ?? id;
                 string category = ReadString(app["category"]) ?? "";
                 bool selected = app["selected"] is not JsonNode flag || flag.GetValueKind() != JsonValueKind.False;
-                profile.Apps.Add(new ProfileApp(id, appName, selected, category));
+                string location = ReadString(app["location"]) ?? "";
+                profile.Apps.Add(new ProfileApp(id, appName, selected, category, location));
             }
         }
 
@@ -240,13 +241,20 @@ public static class ProfileService
         var apps = new JsonArray();
         foreach (ProfileApp app in profile.Apps)
         {
-            apps.Add(new JsonObject
+            var entry = new JsonObject
             {
                 ["id"] = app.Id,
                 ["name"] = app.Name,
                 ["category"] = app.Category,
                 ["selected"] = app.Selected,
-            });
+            };
+
+            if (!string.IsNullOrWhiteSpace(app.Location))
+            {
+                entry["location"] = app.Location;
+            }
+
+            apps.Add(entry);
         }
 
         var root = new JsonObject

@@ -25,13 +25,37 @@ public sealed class AppRowViewModel : ObservableObject
     private bool _isInstalled;
     private string _status = "";
 
-    public AppRowViewModel(string id, string name, bool isSelected, string category)
+    private string _location = "";
+
+    public AppRowViewModel(string id, string name, bool isSelected, string category, string location = "")
     {
         Id = id;
         Name = name;
         Category = category;
         _isSelected = isSelected;
+        _location = location;
     }
+
+    /// <summary>Folder to install the app in; empty for the default one of the installer.</summary>
+    public string Location
+    {
+        get => _location;
+        set
+        {
+            if (value != _location)
+            {
+                _location = value;
+                Raise();
+                Raise(nameof(LocationVisibility));
+                Raise(nameof(LocationTip));
+            }
+        }
+    }
+
+    public System.Windows.Visibility LocationVisibility =>
+        _location.Length > 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+
+    public string LocationTip => _location.Length > 0 ? "Install folder: " + _location : "Choose the install folder";
 
     public string Id { get; }
 

@@ -315,6 +315,7 @@ public partial class OverviewPage : Page
             }
 
             _checks.Add(await BuildSensorsTileAsync());
+            _checks.Add(await BuildTempTileAsync());
 
             // The app updates check needs winget and a few seconds: it appears last.
             var updatesTile = new CheckTileViewModel(
@@ -378,6 +379,68 @@ public partial class OverviewPage : Page
         if (Application.Current.MainWindow is MainWindow main)
         {
             main.NavigateTo(typeof(ToolPage));
+        }
+    }
+
+    private const string TempCleanTag = "cleanTemp";
+
+    /// <summary>Tile of the temporary files: warns when they take more than the limit of the settings.</summary>
+    private static async Task<CheckTileViewModel> BuildTempTileAsync()
+    {
+        const string title = "Temporary files";
+
+        try
+        {
+            long total = await CleanupService.MeasureAsync(CleanupService.UserTemp)
+                + await CleanupService.MeasureAsync(CleanupService.WindowsTemp);
+
+            // The limit is a percentage of the system drive, so it fits small and large disks alike.
+            double percent = Math.Clamp(AppSettings.Current.TempWarningPercent, 0.5, 100);
+            string drive = System.IO.Path.GetPathRoot(Environment.GetFolderPath(Environment.SpecialFolder.Windows)) ?? "C:\\";
+            long driveSize = new DriveInfo(drive).TotalSize;
+            long limit = (long)(driveSize * percent / 100.0);
+            string size = CleanupService.FormatSize(total);
+            string limitText = percent.ToString("0.#") + "% of " + drive.TrimEnd('\\') + " (" + CleanupService.FormatSize(limit) + ")";
+
+            if (total >= limit)
+            {
+                return new CheckTileViewModel(
+                    new CheckResult(title, CheckLevel.Warning, size, "Over " + limitText + " in the user and Windows Temp folders. Files in use are skipped."),
+                    "Clean now",
+                    TempCleanTag,
+                    typeof(UtilitiesPage));
+            }
+
+            return new CheckTileViewModel(
+                new CheckResult(title, CheckLevel.Ok, size, "Under the limit of " + limitText + " (user and Windows Temp folders). Click to open the cleanup."),
+                "",
+                null,
+                typeof(UtilitiesPage));
+        }
+        catch (Exception ex)
+        {
+            return new CheckTileViewModel(new CheckResult(title, CheckLevel.Info, "Not available", ex.Message));
+        }
+    }
+
+    private async Task CleanTempAsync(CheckTileViewModel tile)
+    {
+        try
+        {
+            long freed = await CleanupService.CleanAsync(CleanupService.UserTemp);
+            freed += await CleanupService.CleanAsync(CleanupService.WindowsTemp);
+            TweakEngine.LogChange("cleanup.disk", "temporary files", CleanupService.FormatSize(freed) + " freed");
+        }
+        catch
+        {
+            // The tile is measured again below and shows what is left.
+        }
+
+        int index = _checks.IndexOf(tile);
+        CheckTileViewModel fresh = await BuildTempTileAsync();
+        if (index >= 0 && index < _checks.Count)
+        {
+            _checks[index] = fresh;
         }
     }
 
@@ -524,6 +587,14 @@ public partial class OverviewPage : Page
 
     private async void OnCheckActionClick(object sender, RoutedEventArgs e)
     {
+        if (sender is FrameworkElement source
+            && source.DataContext is CheckTileViewModel tempTile
+            && tempTile.Tag as string == TempCleanTag)
+        {
+            await CleanTempAsync(tempTile);
+            return;
+        }
+
         if (sender is not FrameworkElement element
             || element.DataContext is not CheckTileViewModel tile
             || tile.Tag is not DisplayInfo display)

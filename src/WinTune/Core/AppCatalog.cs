@@ -75,7 +75,7 @@ public static class AppCatalog
             }
 
             ProfileApp? already = existing.FirstOrDefault(a => string.Equals(a.Id, id, StringComparison.OrdinalIgnoreCase));
-            profile.Apps.Add(new ProfileApp(id, name, already?.Selected ?? false, category));
+            profile.Apps.Add(new ProfileApp(id, name, already?.Selected ?? false, category, already?.Location ?? ""));
         }
 
         foreach (ProfileApp app in existing)

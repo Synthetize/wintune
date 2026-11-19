@@ -1,0 +1,153 @@
+<Page
+    x:Class="WinTune.Views.Pages.KeyboardPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    Title="Keyboard"
+    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+    Loaded="OnLoaded">
+    <StackPanel Margin="32,24,32,32">
+        <ui:TextBlock FontTypography="Title" Text="Keyboard" />
+        <ui:TextBlock
+            Margin="0,2,0,12"
+            FontTypography="Caption"
+            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+            Text="Type accented letters and other special characters with a key combination, keeping your keyboard layout as it is (for example a US keyboard)."
+            TextWrapping="Wrap" />
+
+        <ui:InfoBar
+            x:Name="MessageBar"
+            Margin="0,0,0,10"
+            IsClosable="True"
+            IsOpen="False" />
+
+        <!--  Switch and trigger key  -->
+        <ui:Card Margin="0,0,0,10" Padding="16">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0">
+                        <ui:TextBlock FontTypography="Subtitle" Text="Accented letters" />
+                        <ui:TextBlock
+                            Margin="0,2,0,0"
+                            FontTypography="Caption"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Text="While the trigger key is held, the keys of the table below type the special character. With Shift you get the capital letter. The trigger key does nothing else while this is on. It works while WinTune is running (also in the notification area): turn on Start with Windows in Utilities to have it always."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                    <ui:ToggleSwitch
+                        x:Name="EnabledSwitch"
+                        Grid.Column="1"
+                        Margin="12,0,0,0"
+                        VerticalAlignment="Top"
+                        Click="OnEnabledClick" />
+                </Grid>
+                <WrapPanel Margin="0,10,0,0">
+                    <TextBlock
+                        Margin="0,0,8,6"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="Trigger key" />
+                    <ComboBox
+                        x:Name="TriggerBox"
+                        Width="170"
+                        Margin="0,0,16,6"
+                        SelectionChanged="OnTriggerChanged">
+                        <ComboBoxItem Content="Right Alt" Tag="RightAlt" />
+                        <ComboBoxItem Content="Right Ctrl" Tag="RightCtrl" />
+                    </ComboBox>
+                    <TextBlock
+                        Margin="0,0,8,6"
+                        VerticalAlignment="Center"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Text="Try it here" />
+                    <ui:TextBox
+                        Width="320"
+                        Margin="0,0,0,6"
+                        PlaceholderText="Hold the trigger key and press A, E, I, O, U or '" />
+                </WrapPanel>
+            </StackPanel>
+        </ui:Card>
+
+        <!--  Table of shortcuts  -->
+        <ui:Card Padding="16">
+            <StackPanel>
+                <ui:TextBlock FontTypography="Subtitle" Text="Shortcuts" />
+                <ui:TextBlock
+                    Margin="0,2,0,8"
+                    FontTypography="Caption"
+                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                    Text="Key: the key to press together with the trigger (one character, as on your layout). Letter: what it types. With Shift: what it types with Shift held (if empty, the capital of the letter). It can also be a few characters."
+                    TextWrapping="Wrap" />
+
+                <Grid Margin="0,0,0,4">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="70" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="120" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Key" />
+                    <TextBlock Grid.Column="1" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="Letter" />
+                    <TextBlock Grid.Column="2" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="With Shift" />
+                </Grid>
+
+                <ItemsControl x:Name="MappingList" Focusable="False">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Grid Margin="0,0,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="70" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:TextBox
+                                    Grid.Column="0"
+                                    Margin="0,0,8,0"
+                                    MaxLength="1"
+                                    Text="{Binding Key, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:TextBox
+                                    Grid.Column="1"
+                                    Margin="0,0,8,0"
+                                    Text="{Binding Normal, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:TextBox
+                                    Grid.Column="2"
+                                    Margin="0,0,8,0"
+                                    Text="{Binding Shift, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <ui:Button
+                                    Grid.Column="3"
+                                    Padding="6"
+                                    Click="OnRemoveRowClick"
+                                    Icon="{ui:SymbolIcon Dismiss24}"
+                                    ToolTip="Remove" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <WrapPanel Margin="0,8,0,0">
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Appearance="Primary"
+                        Click="OnSaveClick"
+                        Content="Save shortcuts"
+                        Icon="{ui:SymbolIcon Save24}" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnAddRowClick"
+                        Content="Add a row"
+                        Icon="{ui:SymbolIcon Add24}" />
+                    <ui:Button
+                        Margin="0,0,8,6"
+                        Click="OnDefaultsClick"
+                        Content="Restore the default table"
+                        Icon="{ui:SymbolIcon ArrowUndo24}" />
+                </WrapPanel>
+            </StackPanel>
+        </ui:Card>
+    </StackPanel>
+</Page>

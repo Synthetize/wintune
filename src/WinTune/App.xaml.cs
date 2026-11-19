@@ -70,6 +70,9 @@ public partial class App : Application
             TrayService.Enable();
         }
 
+        // Accented-letters shortcuts (only if turned on).
+        KeyboardService.Apply();
+
         // Start with Windows: with the notification-area icon the window is not created at all.
         bool minimized = HasArgument(e, BackgroundUpdates.MinimizedArgument);
         if (!(hideOnClose && minimized))

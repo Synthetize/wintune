@@ -63,11 +63,29 @@ public partial class UtilitiesPage : Page
         }
     }
 
+    private void OnTimeTextChanged(object sender, TextChangedEventArgs e)
+    {
+        // The event also arrives while the page is being created, before the preview exists.
+        if (TimePreview is null)
+        {
+            return;
+        }
+
+        if (ShutdownService.TryParseDelay(MinutesBox.Text, out int minutes, out string error))
+        {
+            TimePreview.Text = "In " + ShutdownService.FormatMinutes(minutes) + ", at " + DateTime.Now.AddMinutes(minutes).ToString("ddd HH:mm");
+        }
+        else
+        {
+            TimePreview.Text = error;
+        }
+    }
+
     private void OnStartShutdownClick(object sender, RoutedEventArgs e)
     {
-        if (!int.TryParse(MinutesBox.Text.Trim(), out int minutes) || minutes < 1 || minutes > 7 * 24 * 60)
+        if (!ShutdownService.TryParseDelay(MinutesBox.Text, out int minutes, out string error))
         {
-            ShowMessage("Invalid time", "Type a number of minutes between 1 and 10080 (7 days).", Wpf.Ui.Controls.InfoBarSeverity.Warning);
+            ShowMessage("Invalid time", error, Wpf.Ui.Controls.InfoBarSeverity.Warning);
             return;
         }
 
